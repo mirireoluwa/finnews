@@ -60,7 +60,10 @@ Render sets `RENDER=true` automatically; `ALLOWED_HOSTS` includes `.onrender.com
 
 ## 5. Verify
 
-- Open `https://<your-render-service>/health/` → JSON `{"status":"ok"}`.
+- Open `https://<your-render-service>/` → JSON with `"service": "finnews-api"` and `"health": "/health/"`.
+- Open `https://<your-render-service>/health` or `/health/` → JSON `{"status":"ok"}`.
+
+If you see plain **“Not Found”** with no JSON, the hostname may be wrong (check the exact URL on the Render **Dashboard** → your web service), or the latest code isn’t deployed yet.
 - Open the Vercel site, sign up / log in, load the dashboard. If the UI calls the wrong host, check `VITE_API_URL` and redeploy Vercel.
 
 ## 6. Optional env (Render)
