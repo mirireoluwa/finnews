@@ -145,12 +145,20 @@ REST_FRAMEWORK = {
 }
 
 # Local dev + optional production frontends (comma-separated), e.g. https://finnews.vercel.app
+# Trailing slashes are stripped — django-cors-headers rejects origins with a path (e.g. ...vercel.app/).
+def _normalize_cors_origin(origin: str) -> str:
+  o = origin.strip()
+  while o.endswith("/"):
+    o = o[:-1]
+  return o
+
+
 _cors_raw = os.environ.get(
   "CORS_ALLOWED_ORIGINS",
   "http://localhost:5173,http://127.0.0.1:5173",
 )
 CORS_ALLOWED_ORIGINS = [
-  origin.strip() for origin in _cors_raw.split(",") if origin.strip()
+  _normalize_cors_origin(o) for o in _cors_raw.split(",") if o.strip()
 ]
 
 # Optional: allow any https://*.vercel.app origin (preview + production subdomains) when
@@ -174,7 +182,7 @@ if not DEBUG:
 _csrf_trusted = os.environ.get("CSRF_TRUSTED_ORIGINS", "").strip()
 if _csrf_trusted:
   CSRF_TRUSTED_ORIGINS = [
-    o.strip() for o in _csrf_trusted.split(",") if o.strip()
+    _normalize_cors_origin(o) for o in _csrf_trusted.split(",") if o.strip()
   ]
 else:
   CSRF_TRUSTED_ORIGINS = list(CORS_ALLOWED_ORIGINS)
