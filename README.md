@@ -1,4 +1,4 @@
-# Finnews
+# FinNews
 
 Beginner-friendly financial news: **Django** API (`backend/`) + **React / Vite** UI (`client/`).
 
@@ -54,27 +54,16 @@ git push -u origin main
 
 Do **not** commit `backend/.env` or real API keys (they are in `.gitignore`).
 
-## Deploy frontend on Vercel
+## Deploy (Vercel + Render)
 
-Vercel hosts the **static React app** only. The **Django API** must run elsewhere (e.g. [Render](https://render.com), [Railway](https://railway.app), [Fly.io](https://fly.io), or your VPS).
+**Step-by-step:** **`DEPLOY.md`** — Django API on **[Render](https://render.com)** (`render.yaml`), React app on **[Vercel](https://vercel.com)** (root `vercel.json`).
 
-**Quick steps**
+**Minimum**
 
-1. Import the GitHub repo in [Vercel](https://vercel.com) → **Add New Project**.
-2. Keep **Root Directory** at the **repo root** so Vercel uses the root **`vercel.json`** (builds `client/` → `client/dist`).  
-   *Alternatively*, set Root Directory to **`client`** and Vercel will use **`client/vercel.json`** instead.
-3. Add **`VITE_API_URL`** (Production): your Django origin with **no** trailing slash, e.g. `https://finnews-api.onrender.com`.
-4. Deploy. The app sends API requests to that host (see `client/src/main.jsx`).
+1. **Render:** deploy `backend/` (Blueprint or manual), set `NEWSAPI_API_KEY`, `CORS_ALLOWED_ORIGINS=https://your-app.vercel.app`.
+2. **Vercel:** import repo, set **`VITE_API_URL=https://your-service.onrender.com`** (no trailing slash), deploy.
 
-More detail: **`VERCEL.md`**.
-
-## Deploy backend (summary)
-
-- Run Django with `gunicorn`, set `DJANGO_SECRET_KEY`, `DEBUG=False`, `ALLOWED_HOSTS`, and **`CORS_ALLOWED_ORIGINS`** to your Vercel URL (see `backend/.env.example`).
-- Use a production database (Postgres) instead of SQLite for real traffic.
-- Set `NEWSAPI_API_KEY` (and optionally `ALPHAVANTAGE_API_KEY`) in the host’s environment.
-
-See `backend/README.md` for API details.
+Vercel-only tips: **`VERCEL.md`**. API details: **`backend/README.md`**.
 
 ## License
 

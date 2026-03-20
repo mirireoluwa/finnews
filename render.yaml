@@ -1,0 +1,44 @@
+# FinNews API on Render — https://render.com/docs/blueprint-spec
+#
+# After first deploy, set in the web service → Environment:
+#   NEWSAPI_API_KEY
+#   CORS_ALLOWED_ORIGINS=https://YOUR_APP.vercel.app   (no trailing slash; comma-separate multiple)
+# Optional:
+#   ALPHAVANTAGE_API_KEY
+#   CORS_ALLOW_VERCEL_PREVIEWS=true   # any https://*.vercel.app (preview deploys)
+#
+# Frontend: Vercel env VITE_API_URL=https://<this-service>.onrender.com (see DEPLOY.md)
+
+databases:
+  - name: finnews-db
+    databaseName: finnews
+    user: finnews
+    plan: free
+
+services:
+  - type: web
+    name: finnews-api
+    runtime: python
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate
+    startCommand: gunicorn finnews_backend.wsgi:application --bind 0.0.0.0:$PORT
+    healthCheckPath: /health/
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: finnews-db
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: NEWSAPI_API_KEY
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: ALPHAVANTAGE_API_KEY
+        sync: false

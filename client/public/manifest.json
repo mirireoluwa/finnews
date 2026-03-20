@@ -1,6 +1,6 @@
 {
-  "name": "Finnews",
-  "short_name": "Finnews",
+  "name": "FinNews",
+  "short_name": "FinNews",
   "description": "Market intelligence — global & NGX briefings and watchlist.",
   "start_url": ".",
   "display": "standalone",
@@ -8,7 +8,7 @@
   "theme_color": "#0a1628",
   "icons": [
     {
-      "src": "/vite.svg",
+      "src": "/favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"

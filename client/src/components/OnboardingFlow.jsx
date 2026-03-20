@@ -217,7 +217,7 @@ export default function OnboardingFlow({
               filter: isLight ? "none" : "brightness(0) invert(1)",
             }}
           />
-          <span style={{ fontWeight: 800, fontSize: 17 }}>Finnews</span>
+          <span style={{ fontWeight: 800, fontSize: 17 }}>FinNews</span>
         </div>
         <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)" }}>
           Step {step} of 3
@@ -435,7 +435,7 @@ export default function OnboardingFlow({
               Your preferences
             </h1>
             <p style={{ margin: "0 0 22px", fontSize: 14, color: "var(--text-muted)", lineHeight: 1.6 }}>
-              How should Finnews work for you? You can change this anytime in your profile.
+              How should FinNews work for you? You can change this anytime in your profile.
             </p>
 
             <p style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", margin: "0 0 10px" }}>
@@ -620,7 +620,7 @@ export default function OnboardingFlow({
             />
 
             <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6, margin: "0 0 20px" }}>
-              Finnews is for information only — not financial advice. Always do your own research.
+              FinNews is for information only — not financial advice. Always do your own research.
             </p>
 
             <div style={{ display: "flex", gap: 10, justifyContent: "space-between", flexWrap: "wrap" }}>
@@ -628,7 +628,7 @@ export default function OnboardingFlow({
                 Back
               </button>
               <button type="button" onClick={finishOnboarding} style={btnPrimary}>
-                Start using Finnews
+                Start using FinNews
               </button>
             </div>
           </div>

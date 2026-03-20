@@ -22,7 +22,7 @@ function StoryProgressBars({ count, activeIndex, storyTick }) {
         top: 0,
         left: 0,
         right: 0,
-        zIndex: 4,
+        zIndex: 12,
         display: "flex",
         gap: 4,
         padding: "12px 12px 0",
@@ -66,7 +66,7 @@ function StoryProgressBars({ count, activeIndex, storyTick }) {
 
 /**
  * Full-bleed hero for auth pages: rotating photos, Instagram-style story
- * navigator, Finnews logo bottom-right.
+ * navigator, FinNews logo bottom-right.
  */
 export default function AuthHeroSlideshow() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -132,6 +132,7 @@ export default function AuthHeroSlideshow() {
       <StoryProgressBars count={count} activeIndex={activeIndex} storyTick={storyTick} />
 
       <div
+        className="auth-slideshow-brand"
         style={{
           position: "absolute",
           bottom: 28,
@@ -155,7 +156,7 @@ export default function AuthHeroSlideshow() {
             filter: "brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.45))",
           }}
         />
-        <span style={{ fontWeight: 800, fontSize: 22, letterSpacing: "-0.03em" }}>Finnews</span>
+        <span style={{ fontWeight: 800, fontSize: 22, letterSpacing: "-0.03em" }}>FinNews</span>
       </div>
     </div>
   );

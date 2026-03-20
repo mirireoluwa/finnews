@@ -1,5 +1,43 @@
 #root {
   width: 100%;
+  overflow-x: clip;
+}
+
+/* Desktop: hide mobile menu control */
+@media (min-width: 769px) {
+  .app-header-menu-btn {
+    display: none !important;
+  }
+}
+
+/* Mobile / small tablet: compact bar — logo + menu + profile only */
+@media (max-width: 768px) {
+  .app-header-bar {
+    height: 56px !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    padding: 0 12px !important;
+  }
+
+  .app-header-title-text {
+    display: none !important;
+  }
+
+  .app-header-desktop-only {
+    display: none !important;
+  }
+
+  .app-header-menu-btn {
+    display: flex !important;
+  }
+
+  .app-header-actions {
+    gap: 6px !important;
+  }
+}
+
+.app-bottom-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .fin-skip-link {
@@ -22,4 +60,3 @@
   outline: 2px solid var(--accent, #38bdf8);
   outline-offset: 2px;
 }
-

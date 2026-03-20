@@ -1,4 +1,4 @@
-# Finnews Backend (Django)
+# FinNews Backend (Django)
 
 This Django project powers the financial news assistant used by the React frontend in `client/`.
 
@@ -88,7 +88,10 @@ The React client uses:
 
   ```bash
   python manage.py check_newsapi_env
+  python manage.py check_newsapi_env --ping   # real test call; shows quota / key errors
   ```
+
+  **Note:** NewsAPI’s **free** developer key is meant for **local development** only (requests must originate from your machine). If Django runs on **Render/Heroku/etc.**, NewsAPI often returns an error unless you use a **paid** plan that allows server-side calls.
 
 - **Alpha Vantage** – used in `CompanySearchView` to power the company search suggestions. Set:
 

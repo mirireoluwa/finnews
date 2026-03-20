@@ -26,11 +26,17 @@ function mockDataHelpText(meta) {
   if (!meta || meta.mode !== "mock") return "";
   const reason = meta.mock_reason;
   const detail = meta.mock_detail;
+  if (reason === "newsapi_http_error" && detail && String(detail).includes("429")) {
+    return (
+      "NewsAPI rate limit hit (free tier: ~100 requests / 24h). Wait for the quota window to reset, reduce refreshes, or upgrade at newsapi.org. " +
+      "After it works again, use Live now or clear cached snapshots."
+    );
+  }
   const byReason = {
     missing_newsapi_key:
       "Create backend/.env next to manage.py with one line (no quotes): NEWSAPI_API_KEY=your_key. Register at newsapi.org/register. Restart runserver (Ctrl+C, then python manage.py runserver). Verify: python manage.py check_newsapi_env. Then use Live now.",
     newsapi_http_error:
-      "NewsAPI rejected the request (wrong key, quota, or HTTP error). Check the Django terminal log.",
+      "NewsAPI rejected the request (wrong key, quota, or HTTP error). Run: python manage.py check_newsapi_env --ping (from backend/) to see the exact code. Check the Django terminal log.",
     newsapi_api_error: detail
       ? `NewsAPI: ${detail}`
       : "NewsAPI returned an error in the response body. Check the Django log.",
@@ -81,6 +87,9 @@ export default function App() {
   const prevBriefingModeRef = useRef(briefingMode);
 
   const [signOutConfirmOpen, setSignOutConfirmOpen] = useState(false);
+  const [appHeaderMenuOpen, setAppHeaderMenuOpen] = useState(false);
+  const mobileHeaderMenuBtnRef = useRef(null);
+  const mobileHeaderDrawerRef = useRef(null);
   const legacySummary = false;
 
   const today = new Date().toLocaleDateString("en-GB", {
@@ -139,6 +148,34 @@ export default function App() {
     }, 800);
     return () => clearTimeout(t);
   }, [watchlist, companyTags, authUser, sessionChecked]);
+
+  useEffect(() => {
+    if (!appHeaderMenuOpen) return;
+    const onDown = (e) => {
+      if (mobileHeaderDrawerRef.current?.contains(e.target)) return;
+      if (mobileHeaderMenuBtnRef.current?.contains(e.target)) return;
+      setAppHeaderMenuOpen(false);
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") setAppHeaderMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [appHeaderMenuOpen]);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 769px)");
+    const close = () => {
+      if (mq.matches) setAppHeaderMenuOpen(false);
+    };
+    close();
+    mq.addEventListener("change", close);
+    return () => mq.removeEventListener("change", close);
+  }, []);
 
   const fetchNews = useCallback(async () => {
     // Live now mode: use the live briefing endpoint and enable change indicators.
@@ -547,6 +584,7 @@ export default function App() {
       </a>
       {/* Sticky rounded top bar */}
       <div
+        className="app-header-sticky-outer"
         style={{
           position: "sticky",
           top: 0,
@@ -555,147 +593,317 @@ export default function App() {
           background: "linear-gradient(180deg, var(--bg) 70%, transparent 100%)",
         }}
       >
-        <header
-          style={{
-            height: 56,
-            maxWidth: LAYOUT_MAX_WIDTH,
-            margin: "0 auto",
-            padding: "0 20px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderRadius: 16,
-            border: "1px solid var(--border-subtle)",
-            background: "var(--bg-glass)",
-            backdropFilter: "blur(14px)",
-            WebkitBackdropFilter: "blur(14px)",
-            boxShadow: isLight ? "0 8px 32px rgba(15, 23, 42, 0.06)" : "0 8px 32px rgba(0, 0, 0, 0.25)",
-            boxSizing: "border-box",
-          }}
+        <div
+          className="app-header-inner-wrap"
+          style={{ position: "relative", maxWidth: LAYOUT_MAX_WIDTH, margin: "0 auto" }}
         >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <img
-            src={finnewsLogo}
-            alt=""
-            width={24}
-            height={36}
+          <header
+            className="app-header-bar"
             style={{
-              display: "block",
-              objectFit: "contain",
-              filter: isLight ? "none" : "brightness(0) invert(1)",
+              height: 56,
+              padding: "0 20px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderRadius: 16,
+              border: "1px solid var(--border-subtle)",
+              background: "var(--bg-glass)",
+              backdropFilter: "blur(14px)",
+              WebkitBackdropFilter: "blur(14px)",
+              boxShadow: isLight ? "0 8px 32px rgba(15, 23, 42, 0.06)" : "0 8px 32px rgba(0, 0, 0, 0.25)",
+              boxSizing: "border-box",
             }}
-          />
-          <span style={{ fontWeight: 800, fontSize: 16, letterSpacing: "-0.03em" }}>Finnews</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{today}</span>
-            {briefingMode === "live" && lastFetched && (
-              <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                Live update · {lastFetched}
-                {autoRefresh ? " · auto every 5m" : " · manual refresh"}
+          >
+            <div className="app-header-brand" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <img
+                src={finnewsLogo}
+                alt=""
+                width={18}
+                height={27}
+                style={{
+                  display: "block",
+                  objectFit: "contain",
+                  filter: isLight ? "none" : "brightness(0) invert(1)",
+                }}
+              />
+              <span
+                className="app-header-title-text"
+                style={{ fontWeight: 800, fontSize: 16, letterSpacing: "-0.03em" }}
+              >
+                FinNews
               </span>
-            )}
-            {briefingMode === "daily" && data && (
-              <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                Daily snapshot —{" "}
+            </div>
+            <div className="app-header-actions" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div className="app-header-desktop-only" style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <div className="app-header-meta" style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{today}</span>
+                  {briefingMode === "live" && lastFetched && (
+                    <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                      Live update · {lastFetched}
+                      {autoRefresh ? " · auto every 5m" : " · manual refresh"}
+                    </span>
+                  )}
+                  {briefingMode === "daily" && data && (
+                    <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                      Daily snapshot —{" "}
+                      <button
+                        type="button"
+                        onClick={fetchNews}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          padding: 0,
+                          margin: 0,
+                          color: "var(--accent)",
+                          font: "inherit",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          textDecoration: "underline",
+                        }}
+                      >
+                        switch to live updates
+                      </button>
+                    </span>
+                  )}
+                </div>
                 <button
                   type="button"
-                  onClick={fetchNews}
+                  onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
                   style={{
-                    background: "none",
-                    border: "none",
-                    padding: 0,
-                    margin: 0,
-                    color: "var(--accent)",
-                    font: "inherit",
-                    fontWeight: 700,
+                    background: "transparent",
+                    border: "1px solid var(--border-subtle)",
+                    color: "var(--text-muted)",
+                    fontSize: 11,
+                    padding: "5px 10px",
+                    borderRadius: 999,
                     cursor: "pointer",
-                    textDecoration: "underline",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
                   }}
                 >
-                  switch to live updates
+                  <span>{isLight ? "☾" : "☀"}</span>
+                  <span>{isLight ? "Dark" : "Light"}</span>
                 </button>
-              </span>
-            )}
-          </div>
-          <button
-            onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
-            style={{
-              background: "transparent",
-              border: "1px solid var(--border-subtle)",
-              color: "var(--text-muted)",
-              fontSize: 11,
-              padding: "5px 10px",
-              borderRadius: 999,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            <span>{isLight ? "☾" : "☀"}</span>
-            <span>{isLight ? "Dark" : "Light"}</span>
-          </button>
-          <button
-            onClick={() => {
-              if (briefingMode === "daily") return;
-              setAutoRefresh((v) => !v);
-            }}
-            style={{
-              background:
-                briefingMode === "daily"
-                  ? "transparent"
-                  : autoRefresh
-                    ? "var(--accent-soft)"
-                    : "transparent",
-              border: "1px solid var(--border-subtle)",
-              color: "var(--text-muted)",
-              fontSize: 11,
-              padding: "5px 10px",
-              borderRadius: 999,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              whiteSpace: "nowrap",
-              opacity: briefingMode === "daily" ? 0.5 : 1,
-            }}
-            title={
-              briefingMode === "daily"
-                ? "Daily snapshot mode doesn't auto-refresh"
-                : "Automatically refresh the briefing every 5 minutes"
-            }
-          >
-            <span style={{ fontWeight: 900 }}>
-              {briefingMode === "daily" ? "Daily" : autoRefresh ? "Auto" : "Manual"}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("watchlist")}
-            style={{
-              background: "var(--accent-soft)",
-              border: "1px solid var(--border-subtle)",
-              color: "var(--accent)",
-              fontSize: 12,
-              padding: "5px 12px",
-              borderRadius: 6,
-              cursor: "pointer",
-              fontWeight: 500,
-            }}
-          >
-            Watchlist
-          </button>
-          <ProfileMenu
-            user={authUser}
-            setAuthUser={setAuthUser}
-            setBriefingMode={setBriefingMode}
-            setAutoRefresh={setAutoRefresh}
-            onSignOutRequest={() => setSignOutConfirmOpen(true)}
-          />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (briefingMode === "daily") return;
+                    setAutoRefresh((v) => !v);
+                  }}
+                  style={{
+                    background:
+                      briefingMode === "daily"
+                        ? "transparent"
+                        : autoRefresh
+                          ? "var(--accent-soft)"
+                          : "transparent",
+                    border: "1px solid var(--border-subtle)",
+                    color: "var(--text-muted)",
+                    fontSize: 11,
+                    padding: "5px 10px",
+                    borderRadius: 999,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    whiteSpace: "nowrap",
+                    opacity: briefingMode === "daily" ? 0.5 : 1,
+                  }}
+                  title={
+                    briefingMode === "daily"
+                      ? "Daily snapshot mode doesn't auto-refresh"
+                      : "Automatically refresh the briefing every 5 minutes"
+                  }
+                >
+                  <span style={{ fontWeight: 900 }}>
+                    {briefingMode === "daily" ? "Daily" : autoRefresh ? "Auto" : "Manual"}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTab("watchlist")}
+                  style={{
+                    background: "var(--accent-soft)",
+                    border: "1px solid var(--border-subtle)",
+                    color: "var(--accent)",
+                    fontSize: 12,
+                    padding: "5px 12px",
+                    borderRadius: 6,
+                    cursor: "pointer",
+                    fontWeight: 500,
+                  }}
+                >
+                  Watchlist
+                </button>
+              </div>
+              <button
+                ref={mobileHeaderMenuBtnRef}
+                type="button"
+                className="app-header-menu-btn"
+                aria-label={appHeaderMenuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={appHeaderMenuOpen}
+                onClick={() => setAppHeaderMenuOpen((o) => !o)}
+                style={{
+                  display: "none",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 44,
+                  height: 44,
+                  padding: 0,
+                  borderRadius: 12,
+                  border: "1px solid var(--border-subtle)",
+                  background: "var(--bg-elevated)",
+                  color: "var(--text-primary)",
+                  cursor: "pointer",
+                  fontSize: 18,
+                  lineHeight: 1,
+                }}
+              >
+                ☰
+              </button>
+              <ProfileMenu
+                user={authUser}
+                setAuthUser={setAuthUser}
+                setBriefingMode={setBriefingMode}
+                setAutoRefresh={setAutoRefresh}
+                onSignOutRequest={() => setSignOutConfirmOpen(true)}
+              />
+            </div>
+          </header>
+
+          {appHeaderMenuOpen ? (
+            <div
+              ref={mobileHeaderDrawerRef}
+              className="app-header-mobile-drawer"
+              role="dialog"
+              aria-label="App menu"
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                top: "calc(100% + 6px)",
+                padding: "12px 14px 16px",
+                borderRadius: 16,
+                border: "1px solid var(--border-subtle)",
+                background: "var(--bg-glass)",
+                backdropFilter: "blur(14px)",
+                WebkitBackdropFilter: "blur(14px)",
+                boxShadow: isLight ? "0 12px 40px rgba(15, 23, 42, 0.12)" : "0 16px 48px rgba(0, 0, 0, 0.45)",
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+                zIndex: 120,
+              }}
+            >
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <span style={{ fontSize: 11, fontWeight: 800, color: "var(--text-muted)", letterSpacing: "0.06em" }}>
+                  TODAY
+                </span>
+                <span style={{ fontSize: 13, color: "var(--text-primary)" }}>{today}</span>
+                {briefingMode === "live" && lastFetched ? (
+                  <span style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.45 }}>
+                    Live · {lastFetched}
+                    {autoRefresh ? " · auto every 5m" : " · manual refresh"}
+                  </span>
+                ) : null}
+                {briefingMode === "daily" && data ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      fetchNews();
+                      setAppHeaderMenuOpen(false);
+                    }}
+                    style={{
+                      alignSelf: "flex-start",
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      color: "var(--accent)",
+                      font: "inherit",
+                      fontWeight: 700,
+                      fontSize: 12,
+                      cursor: "pointer",
+                      textDecoration: "underline",
+                    }}
+                  >
+                    Switch to live updates
+                  </button>
+                ) : null}
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTheme((t) => (t === "dark" ? "light" : "dark"));
+                  }}
+                  style={{
+                    flex: "1 1 auto",
+                    minWidth: "44%",
+                    background: "transparent",
+                    border: "1px solid var(--border-subtle)",
+                    color: "var(--text-muted)",
+                    fontSize: 13,
+                    padding: "10px 12px",
+                    borderRadius: 12,
+                    cursor: "pointer",
+                    fontWeight: 600,
+                  }}
+                >
+                  {isLight ? "☾ Dark mode" : "☀ Light mode"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (briefingMode === "daily") return;
+                    setAutoRefresh((v) => !v);
+                  }}
+                  disabled={briefingMode === "daily"}
+                  style={{
+                    flex: "1 1 auto",
+                    minWidth: "44%",
+                    background:
+                      briefingMode === "daily"
+                        ? "transparent"
+                        : autoRefresh
+                          ? "var(--accent-soft)"
+                          : "transparent",
+                    border: "1px solid var(--border-subtle)",
+                    color: "var(--text-muted)",
+                    fontSize: 13,
+                    padding: "10px 12px",
+                    borderRadius: 12,
+                    cursor: briefingMode === "daily" ? "not-allowed" : "pointer",
+                    fontWeight: 700,
+                    opacity: briefingMode === "daily" ? 0.5 : 1,
+                  }}
+                >
+                  {briefingMode === "daily" ? "Daily snapshot" : autoRefresh ? "Auto refresh on" : "Manual refresh"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTab("watchlist");
+                    setAppHeaderMenuOpen(false);
+                  }}
+                  style={{
+                    width: "100%",
+                    background: "var(--accent-soft)",
+                    border: "1px solid var(--border-subtle)",
+                    color: "var(--accent)",
+                    fontSize: 14,
+                    padding: "12px 14px",
+                    borderRadius: 12,
+                    cursor: "pointer",
+                    fontWeight: 700,
+                  }}
+                >
+                  Open watchlist
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
-        </header>
       </div>
 
       {signOutConfirmOpen && (
@@ -819,7 +1027,8 @@ export default function App() {
           width: "100%",
           maxWidth: LAYOUT_MAX_WIDTH,
           margin: "0 auto",
-          padding: "0 16px 92px",
+          padding: "0 16px",
+          paddingBottom: "max(92px, calc(92px + env(safe-area-inset-bottom, 0px)))",
           boxSizing: "border-box",
         }}
       >

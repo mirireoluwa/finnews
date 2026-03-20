@@ -31,9 +31,11 @@ export default function BottomNav({ active, onChange, theme = "dark" }) {
       style={{
         position: "fixed",
         left: "50%",
-        bottom: 14,
+        bottom: "max(14px, env(safe-area-inset-bottom, 0px))",
         transform: "translateX(-50%)",
         zIndex: 40,
+        maxWidth: "calc(100vw - 20px)",
+        boxSizing: "border-box",
         background: "var(--nav-surface)",
         borderRadius: 22,
         border: "1px solid var(--nav-border)",
@@ -42,6 +44,10 @@ export default function BottomNav({ active, onChange, theme = "dark" }) {
         boxShadow: "none",
         display: "flex",
         gap: 8,
+        overflowX: "auto",
+        WebkitOverflowScrolling: "touch",
+        scrollbarWidth: "none",
+        msOverflowStyle: "none",
       }}
     >
       {NAV_ITEMS.map((item) => {

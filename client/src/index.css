@@ -71,12 +71,18 @@
   --nav-icon-well-inactive: rgba(56, 189, 248, 0.35);
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--bg);
   color: var(--text-primary);
+  overflow-x: clip;
 }
 
 #root {

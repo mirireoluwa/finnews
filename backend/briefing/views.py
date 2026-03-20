@@ -20,7 +20,8 @@ NEWSAPI_URL = "https://newsapi.org/v2/everything"
 ALPHAVANTAGE_URL = "https://www.alphavantage.co/query"
 
 # Wider coverage: fetch more from NewsAPI, keep up to this many stories per region.
-_NEWSAPI_PAGE = int((os.environ.get("NEWSAPI_MARKET_PAGE_SIZE") or "40").strip())
+# Default 24: free NewsAPI is ~100 requests/day; each briefing uses 3 calls (global + ngx + batched watchlist).
+_NEWSAPI_PAGE = int((os.environ.get("NEWSAPI_MARKET_PAGE_SIZE") or "24").strip())
 NEWSAPI_MARKET_PAGE_SIZE = max(10, min(_NEWSAPI_PAGE, 100))
 _MAX_STORIES = int((os.environ.get("MAX_MARKET_STORIES") or "30").strip())
 MAX_MARKET_STORIES = max(5, min(_MAX_STORIES, 100))
@@ -227,46 +228,90 @@ class BriefingView(APIView):
       "mood_explanation": mood_explanation_map[market_mood],
     }
 
+  def _watchlist_item_from_article(
+    self, name: str, art: dict[str, Any]
+  ) -> dict[str, Any]:
+    title = art.get("title") or name
+    desc = art.get("description") or ""
+    base_text = desc or art.get("content") or ""
+    summary = base_text.strip() or (
+      "There is a recent headline about this company, but details are limited."
+    )
+    if len(summary) > 260:
+      summary = summary[:257].rsplit(" ", 1)[0] + "..."
+    impact = self._classify_impact(f"{title} {desc}")
+    return {
+      "company": name,
+      "news": summary,
+      "sentiment": impact,
+      "tip": (
+        "Short‑term headlines can move this stock, but it is usually better to decide based on "
+        "your long‑term plan instead of one article."
+      ),
+    }
+
+  def _fetch_watchlist_articles_batched(
+    self, *, api_key: str, watchlist: list[str]
+  ) -> list[dict[str, Any]]:
+    """
+    One NewsAPI request for the whole watchlist (saves quota vs one request per ticker).
+    Free tier is ~100 requests/day — previously 2 + len(watchlist) calls per briefing.
+    """
+    parts: list[str] = []
+    for raw in watchlist:
+      n = (raw or "").strip()
+      if not n:
+        continue
+      safe = n.replace('"', " ").replace("\\", " ").strip()
+      if safe:
+        parts.append(f'"{safe}"')
+    if not parts:
+      return []
+    q = "(" + " OR ".join(parts) + ") AND (stock OR shares OR earnings OR results OR company)"
+    page = min(100, max(12, len(parts) * 5))
+    return self._fetch_articles(api_key=api_key, query=q, page_size=page)
+
+  def _match_article_for_company(
+    self, name: str, articles: list[dict[str, Any]], used: set[int]
+  ) -> tuple[dict[str, Any] | None, int | None]:
+    needle = (name or "").strip().lower()
+    if not needle:
+      return None, None
+    for i, art in enumerate(articles):
+      if i in used:
+        continue
+      blob = f"{art.get('title') or ''} {art.get('description') or ''}".lower()
+      if needle in blob:
+        return art, i
+    return None, None
+
   def _build_watchlist_items(
     self, *, api_key: str, watchlist: list[str]
   ) -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
+    batch: list[dict[str, Any]] = []
+    try:
+      batch = self._fetch_watchlist_articles_batched(api_key=api_key, watchlist=watchlist)
+    except Exception as exc:  # noqa: BLE001
+      logger.warning("Batched watchlist fetch failed: %s", exc)
+      batch = []
+
+    used_article_indices: set[int] = set()
     for name in watchlist:
-      try:
-        articles = self._fetch_articles(
-          api_key=api_key, query=f'"{name}" stock OR shares OR results', page_size=1
-        )
-      except Exception as exc:  # noqa: BLE001
-        logger.warning("Watchlist fetch failed for %s: %s", name, exc)
-        articles = []
+      art, idx = self._match_article_for_company(name, batch, used_article_indices)
+      if art is not None and idx is not None:
+        used_article_indices.add(idx)
+        items.append(self._watchlist_item_from_article(name, art))
+        continue
 
-      if articles:
-        art = articles[0]
-        title = art.get("title") or name
-        desc = art.get("description") or ""
-        base_text = desc or art.get("content") or ""
-        summary = base_text.strip() or (
-          "There is a recent headline about this company, but details are limited."
-        )
-        if len(summary) > 260:
-          summary = summary[:257].rsplit(" ", 1)[0] + "..."
-        impact = self._classify_impact(f"{title} {desc}")
-        sentiment = impact
-        tip = (
-          "Short‑term headlines can move this stock, but it is usually better to decide based on "
-          "your long‑term plan instead of one article."
-        )
-        news_text = summary
-      else:
-        sentiment = "neutral"
-        news_text = (
-          "No major headlines specifically about this company were found today. Its share price is "
-          "likely moving with the wider market."
-        )
-        tip = (
-          "For a long‑term investor, ordinary days without big news rarely require quick action."
-        )
-
+      sentiment = "neutral"
+      news_text = (
+        "No major headlines specifically about this company were found today. Its share price is "
+        "likely moving with the wider market."
+      )
+      tip = (
+        "For a long‑term investor, ordinary days without big news rarely require quick action."
+      )
       items.append(
         {
           "company": name,

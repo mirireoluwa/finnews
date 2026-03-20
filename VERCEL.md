@@ -1,6 +1,8 @@
 # Deploy FinNews on Vercel
 
-Vercel hosts the **React (Vite) app** in `client/`. The **Django API** must run on another host (Render, Railway, Fly.io, etc.) and be reachable over HTTPS.
+**Full stack (API on Render + UI here):** see **`DEPLOY.md`**.
+
+Vercel hosts the **React (Vite) app** in `client/`. The **Django API** must run on another host (e.g. **Render** — see `render.yaml`) and be reachable over HTTPS.
 
 ## Option A — Import from GitHub (recommended)
 
