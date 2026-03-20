@@ -27,7 +27,7 @@ Vercel hosts the **React (Vite) app** in `client/`. The **Django API** must run 
 
 ## Backend checklist (not on Vercel)
 
-- Set **`CORS_ALLOWED_ORIGINS`** (or your project’s equivalent) to include your Vercel URL, e.g. `https://finnews.vercel.app`.
+- Set **`CORS_ALLOWED_ORIGINS`** on the API to include your public site, e.g. `https://fin-news.xyz`.
 - Production: `DEBUG=False`, `ALLOWED_HOSTS`, `DJANGO_SECRET_KEY`, Postgres (or similar), `NEWSAPI_API_KEY` in the host env.
 
 See **`backend/.env.example`** and the main **`README.md`**.

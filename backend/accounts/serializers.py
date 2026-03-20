@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_decode
 from rest_framework import serializers
 
 from .models import UserProfile, default_preferences, default_watchlist
@@ -85,3 +87,50 @@ class ProfileUpdateSerializer(serializers.Serializer):
   watchlist = serializers.ListField(child=serializers.CharField(), required=False)
   companyTags = serializers.JSONField(required=False)
   onboardingCompleted = serializers.BooleanField(required=False)
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+  email = serializers.EmailField()
+
+  def validate_email(self, value: str) -> str:
+    return value.strip().lower()
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+  uid = serializers.CharField()
+  token = serializers.CharField()
+  new_password = serializers.CharField(write_only=True, min_length=8)
+
+  def validate_new_password(self, value: str) -> str:
+    if not password_meets_all_requirements(value):
+      raise serializers.ValidationError(
+        "Password must include upper, lower, number, and a special character."
+      )
+    return value
+
+  def validate(self, attrs: dict) -> dict:
+    uid_b = attrs.get("uid") or ""
+    token = attrs.get("token") or ""
+    try:
+      pk = int(urlsafe_base64_decode(uid_b).decode())
+    except (ValueError, TypeError, OverflowError, UnicodeDecodeError):
+      raise serializers.ValidationError({"uid": ["This reset link is invalid."]})
+    try:
+      user = User.objects.get(pk=pk)
+    except User.DoesNotExist:
+      raise serializers.ValidationError({"uid": ["This reset link is invalid."]})
+    if not default_token_generator.check_token(user, token):
+      raise serializers.ValidationError(
+        {"token": ["This reset link is invalid or has expired. Request a new reset email."]}
+      )
+    attrs["user"] = user
+    return attrs
+
+  def save(self, **kwargs) -> User:
+    from rest_framework.authtoken.models import Token
+
+    user: User = self.validated_data["user"]
+    user.set_password(self.validated_data["new_password"])
+    user.save(update_fields=["password"])
+    Token.objects.filter(user=user).delete()
+    return user

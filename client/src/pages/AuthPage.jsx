@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import AuthHeroSlideshow from "../components/AuthHeroSlideshow.jsx";
 import PasswordRequirementList from "../components/PasswordRequirementList.jsx";
-import { loginAccount, registerAccount } from "../utils/authStorage.js";
+import {
+  confirmPasswordReset,
+  loginAccount,
+  registerAccount,
+  requestPasswordReset,
+} from "../utils/authStorage.js";
 import { passwordMeetsAllRequirements } from "../utils/passwordRules.js";
 import finnewsLogo from "../assets/finnews-logo.svg";
 
@@ -51,14 +56,36 @@ export default function AuthPage({ onAuthenticated }) {
   const [showPassword, setShowPassword] = useState(false);
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [formError, setFormError] = useState("");
+  const [resetUid, setResetUid] = useState("");
+  const [resetToken, setResetToken] = useState("");
+  const [forgotSent, setForgotSent] = useState(false);
+  const [authBanner, setAuthBanner] = useState({ type: "", text: "" });
 
   const prefersLight = useSystemPrefersLight();
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("reset") !== "1") return;
+      const u = params.get("uid");
+      const t = params.get("token");
+      if (!u || !t) return;
+      setResetUid(u);
+      setResetToken(t);
+      setMode("reset");
+      const path = window.location.pathname || "/";
+      window.history.replaceState({}, document.title, path);
+    } catch {
+      /* ignore */
+    }
+  }, []);
   const formPanelBg = prefersLight ? "#ffffff" : "var(--bg-elevated)";
   const subtitleColor = "var(--text-muted)";
 
   async function handleLogin(e) {
     e.preventDefault();
     setFormError("");
+    setAuthBanner({ type: "", text: "" });
     if (!email.trim()) {
       setFormError("Enter your email address.");
       return;
@@ -108,6 +135,54 @@ export default function AuthPage({ onAuthenticated }) {
       onAuthenticated(user);
     } catch (err) {
       setFormError(err.message || "Could not create account.");
+    }
+  }
+
+  async function handleForgotSubmit(e) {
+    e.preventDefault();
+    setFormError("");
+    if (!email.trim()) {
+      setFormError("Enter your email address.");
+      return;
+    }
+    try {
+      await requestPasswordReset({ email: email.trim() });
+      setForgotSent(true);
+    } catch (err) {
+      setFormError(err.message || "Could not send reset email.");
+    }
+  }
+
+  async function handleResetSubmit(e) {
+    e.preventDefault();
+    setFormError("");
+    if (!resetUid || !resetToken) {
+      setFormError("This reset link is incomplete. Open the link from your email again.");
+      return;
+    }
+    if (!passwordMeetsAllRequirements(password)) {
+      setFormError("Password must meet every requirement below.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setFormError("Passwords do not match.");
+      return;
+    }
+    try {
+      await confirmPasswordReset({
+        uid: resetUid,
+        token: resetToken,
+        newPassword: password,
+      });
+      setPassword("");
+      setConfirmPassword("");
+      setResetUid("");
+      setResetToken("");
+      setMode("login");
+      setForgotSent(false);
+      setAuthBanner({ type: "ok", text: "Password updated. Sign in with your new password." });
+    } catch (err) {
+      setFormError(err.message || "Could not reset password.");
     }
   }
 
@@ -170,6 +245,18 @@ export default function AuthPage({ onAuthenticated }) {
           <div style={{ width: "100%", maxWidth: 440, margin: "0 auto" }}>
             {mode === "login" ? (
               <>
+                {authBanner.type === "ok" && authBanner.text && (
+                  <p
+                    style={{
+                      color: "var(--positive, #22c55e)",
+                      fontSize: 13,
+                      margin: "0 0 16px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {authBanner.text}
+                  </p>
+                )}
                 <form onSubmit={handleLogin}>
                   <div style={{ marginBottom: 18 }}>
                     <label style={fieldLabel}>
@@ -222,7 +309,12 @@ export default function AuthPage({ onAuthenticated }) {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setFormError("Password reset is not available in this demo build.")}
+                    onClick={() => {
+                      setMode("forgot");
+                      setFormError("");
+                      setForgotSent(false);
+                      setAuthBanner({ type: "", text: "" });
+                    }}
                     style={{
                       background: "none",
                       border: "none",
@@ -263,6 +355,7 @@ export default function AuthPage({ onAuthenticated }) {
                     onClick={() => {
                       setMode("signup");
                       setFormError("");
+                      setAuthBanner({ type: "", text: "" });
                     }}
                     style={{
                       background: "none",
@@ -280,7 +373,181 @@ export default function AuthPage({ onAuthenticated }) {
                 </p>
                 <p style={{ marginTop: 32, fontSize: 12, color: subtitleColor, display: "flex", gap: 8, alignItems: "center" }}>
                   <span aria-hidden>🔒</span>
-                  <span>Your session is stored locally for this demo. Use a unique password.</span>
+                  <span>Your session uses a secure token stored on this device after you sign in.</span>
+                </p>
+              </>
+            ) : mode === "forgot" ? (
+              <>
+                <form onSubmit={handleForgotSubmit}>
+                  <p style={{ fontSize: 14, color: subtitleColor, margin: "0 0 18px", lineHeight: 1.5 }}>
+                    Enter the email for your account. If it exists, we&apos;ll send a link to reset your password.
+                  </p>
+                  <div style={{ marginBottom: 18 }}>
+                    <label style={fieldLabel}>
+                      Email address <span style={{ color: "var(--accent)" }}>*</span>
+                    </label>
+                    <input
+                      className="fin-input auth-input-full"
+                      type="email"
+                      autoComplete="email"
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </div>
+                  {forgotSent && (
+                    <p style={{ color: "var(--positive, #22c55e)", fontSize: 13, margin: "0 0 16px", fontWeight: 600 }}>
+                      Check your inbox for the reset link. If you don&apos;t see it, look in spam or try again in a few
+                      minutes.
+                    </p>
+                  )}
+                  {formError && (
+                    <p style={{ color: "#f87171", fontSize: 13, margin: "0 0 16px" }}>{formError}</p>
+                  )}
+                  <button
+                    type="submit"
+                    style={{
+                      width: "100%",
+                      padding: "14px 20px",
+                      borderRadius: 12,
+                      border: "none",
+                      background: "var(--accent)",
+                      color: "var(--on-accent)",
+                      fontSize: 15,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    Send reset link
+                  </button>
+                </form>
+                <p style={{ marginTop: 24, fontSize: 14, color: subtitleColor }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode("login");
+                      setFormError("");
+                      setAuthBanner({ type: "", text: "" });
+                    }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "var(--accent)",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      padding: 0,
+                      font: "inherit",
+                      textDecoration: "underline",
+                    }}
+                  >
+                    Back to sign in
+                  </button>
+                </p>
+              </>
+            ) : mode === "reset" ? (
+              <>
+                <form onSubmit={handleResetSubmit}>
+                  <p style={{ fontSize: 14, color: subtitleColor, margin: "0 0 18px", lineHeight: 1.5 }}>
+                    Choose a new password for your account.
+                  </p>
+                  <div style={{ marginBottom: 18 }}>
+                    <label style={fieldLabel}>
+                      New password <span style={{ color: "var(--accent)" }}>*</span>
+                    </label>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        className="fin-input auth-input-full"
+                        type={showPassword ? "text" : "password"}
+                        autoComplete="new-password"
+                        placeholder="At least 8 characters"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        style={{ ...inputStyle, paddingRight: 44 }}
+                      />
+                      <button
+                        type="button"
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        onClick={() => setShowPassword((v) => !v)}
+                        style={{
+                          position: "absolute",
+                          right: 10,
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          background: "none",
+                          border: "none",
+                          color: "var(--accent)",
+                          cursor: "pointer",
+                          fontSize: 13,
+                          padding: 4,
+                        }}
+                      >
+                        {showPassword ? "Hide" : "Show"}
+                      </button>
+                    </div>
+                    {password.length > 0 && <PasswordRequirementList password={password} />}
+                  </div>
+                  <div style={{ marginBottom: 18 }}>
+                    <label style={fieldLabel}>
+                      Confirm new password <span style={{ color: "var(--accent)" }}>*</span>
+                    </label>
+                    <input
+                      className="fin-input auth-input-full"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      placeholder="Repeat password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </div>
+                  {formError && (
+                    <p style={{ color: "#f87171", fontSize: 13, margin: "0 0 16px" }}>{formError}</p>
+                  )}
+                  <button
+                    type="submit"
+                    style={{
+                      width: "100%",
+                      padding: "14px 20px",
+                      borderRadius: 12,
+                      border: "none",
+                      background: "var(--accent)",
+                      color: "var(--on-accent)",
+                      fontSize: 15,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    Update password
+                  </button>
+                </form>
+                <p style={{ marginTop: 24, fontSize: 14, color: subtitleColor }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode("login");
+                      setFormError("");
+                      setPassword("");
+                      setConfirmPassword("");
+                      setResetUid("");
+                      setResetToken("");
+                      setAuthBanner({ type: "", text: "" });
+                    }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "var(--accent)",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      padding: 0,
+                      font: "inherit",
+                      textDecoration: "underline",
+                    }}
+                  >
+                    Back to sign in
+                  </button>
                 </p>
               </>
             ) : (
@@ -443,6 +710,7 @@ export default function AuthPage({ onAuthenticated }) {
                     onClick={() => {
                       setMode("login");
                       setFormError("");
+                      setAuthBanner({ type: "", text: "" });
                     }}
                     style={{
                       background: "none",
@@ -494,6 +762,20 @@ export default function AuthPage({ onAuthenticated }) {
                   <h1 className="auth-hero-title auth-hero-title-login">Welcome back</h1>
                   <p className="auth-hero-sub" style={heroSub}>
                     Log in to track global markets, NGX headlines, and your personal watchlist.
+                  </p>
+                </>
+              ) : mode === "forgot" ? (
+                <>
+                  <h1 className="auth-hero-title auth-hero-title-login">Reset your password</h1>
+                  <p className="auth-hero-sub" style={heroSub}>
+                    We&apos;ll email you a secure link to choose a new password.
+                  </p>
+                </>
+              ) : mode === "reset" ? (
+                <>
+                  <h1 className="auth-hero-title auth-hero-title-login">Choose a new password</h1>
+                  <p className="auth-hero-sub" style={heroSub}>
+                    Pick a strong password, then sign in with it.
                   </p>
                 </>
               ) : (

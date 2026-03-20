@@ -104,7 +104,7 @@ The React client uses:
 If the React app is on another origin (e.g. **Vercel**), set in **`backend/.env`**:
 
 ```bash
-CORS_ALLOWED_ORIGINS=https://your-app.vercel.app,http://localhost:5173
+CORS_ALLOWED_ORIGINS=https://fin-news.xyz,http://localhost:5173
 ```
 
 You can keep `BriefingLog` in `briefing/models.py` to store what was sent each day so you can audit past briefings if needed. If the database write fails for any reason, the API will still respond successfully with the briefing payload.

@@ -60,7 +60,7 @@ Do **not** commit `backend/.env` or real API keys (they are in `.gitignore`).
 
 **Minimum**
 
-1. **Render:** deploy `backend/` (Blueprint or manual), set `NEWSAPI_API_KEY`, `CORS_ALLOWED_ORIGINS=https://your-app.vercel.app`.
+1. **Render:** deploy `backend/` (Blueprint or manual), set `NEWSAPI_API_KEY`, `CORS_ALLOWED_ORIGINS=https://fin-news.xyz`, and `FRONTEND_URL=https://fin-news.xyz` (for password reset emails).
 2. **Vercel:** import repo, set **`VITE_API_URL=https://your-service.onrender.com`** (no trailing slash), deploy.
 
 Vercel-only tips: **`VERCEL.md`**. API details: **`backend/README.md`**.

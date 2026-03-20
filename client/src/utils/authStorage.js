@@ -81,6 +81,32 @@ export async function loginAccount({ email, password }) {
   }
 }
 
+/**
+ * Request a password-reset email (always succeeds from API if format valid).
+ */
+export async function requestPasswordReset({ email }) {
+  try {
+    await axios.post("/api/auth/password-reset/", { email: email.trim() });
+  } catch (e) {
+    throw new Error(apiErrorMessage(e));
+  }
+}
+
+/**
+ * Complete reset from link: uid & token from query string, new password.
+ */
+export async function confirmPasswordReset({ uid, token, newPassword }) {
+  try {
+    await axios.post("/api/auth/password-reset/confirm/", {
+      uid,
+      token,
+      new_password: newPassword,
+    });
+  } catch (e) {
+    throw new Error(apiErrorMessage(e));
+  }
+}
+
 export async function logoutAccount() {
   try {
     if (getToken()) await axios.post("/api/auth/logout/");

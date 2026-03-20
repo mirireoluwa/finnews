@@ -144,8 +144,8 @@ REST_FRAMEWORK = {
   ],
 }
 
-# Local dev + optional production frontends (comma-separated), e.g. https://finnews.vercel.app
-# Trailing slashes are stripped — django-cors-headers rejects origins with a path (e.g. ...vercel.app/).
+# Local dev + optional production frontends (comma-separated), e.g. https://fin-news.xyz
+# Trailing slashes are stripped — django-cors-headers rejects origins with a path (e.g. ...xyz/).
 def _normalize_cors_origin(origin: str) -> str:
   o = origin.strip()
   while o.endswith("/"):
@@ -186,3 +186,22 @@ if _csrf_trusted:
   ]
 else:
   CSRF_TRUSTED_ORIGINS = list(CORS_ALLOWED_ORIGINS)
+
+# --- Email & password reset (forgot password) ---
+# Public URL of the React app (no trailing slash). Used in reset links, e.g. https://fin-news.xyz
+FRONTEND_URL = (os.environ.get("FRONTEND_URL") or "").strip().rstrip("/")
+
+_default_from = os.environ.get("DEFAULT_FROM_EMAIL", "FinNews <noreply@localhost>")
+DEFAULT_FROM_EMAIL = _default_from
+SERVER_EMAIL = _default_from
+
+if (os.environ.get("EMAIL_HOST") or "").strip():
+  EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+  EMAIL_HOST = os.environ["EMAIL_HOST"].strip()
+  EMAIL_PORT = int((os.environ.get("EMAIL_PORT") or "587").strip())
+  EMAIL_USE_TLS = (os.environ.get("EMAIL_USE_TLS") or "true").lower() in ("1", "true", "yes")
+  EMAIL_HOST_USER = (os.environ.get("EMAIL_HOST_USER") or "").strip()
+  EMAIL_HOST_PASSWORD = (os.environ.get("EMAIL_HOST_PASSWORD") or "").strip()
+else:
+  # Local / dev: reset links print in the Django console (runserver) or Render logs.
+  EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

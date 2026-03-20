@@ -19,8 +19,10 @@ Vercel and Render both deploy from Git.
    | Variable | Notes |
    |----------|--------|
    | `NEWSAPI_API_KEY` | Required for live headlines (production use may need a paid NewsAPI plan). |
-   | `CORS_ALLOWED_ORIGINS` | Your Vercel URLs, comma-separated, **no trailing slashes**, e.g. `https://finnews.vercel.app,https://finnews-xxx.vercel.app` |
+   | `CORS_ALLOWED_ORIGINS` | Your live site origin(s), comma-separated, **no trailing slashes**, e.g. `https://fin-news.xyz` (add `http://localhost:5173` for local dev if needed). |
    | `ALPHAVANTAGE_API_KEY` | Optional (company search). |
+   | **`FRONTEND_URL`** | **Your public app URL** (no trailing slash), e.g. `https://fin-news.xyz` — used in **forgot-password** emails. Without it, reset requests are accepted but no email is sent (check logs). |
+   | `EMAIL_HOST`, `EMAIL_HOST_PASSWORD`, … | Optional SMTP. If omitted, reset emails go to the **server console** (see Render logs for the link). |
 
    Generated / wired by the blueprint: `DATABASE_URL`, `DJANGO_SECRET_KEY`, `DEBUG=False`, `PYTHON_VERSION`.
 
@@ -64,7 +66,7 @@ Render sets `RENDER=true` automatically; `ALLOWED_HOSTS` includes `.onrender.com
 - Open `https://<your-render-service>/health` or `/health/` → JSON `{"status":"ok"}`.
 
 If you see plain **“Not Found”** with no JSON, the hostname may be wrong (check the exact URL on the Render **Dashboard** → your web service), or the latest code isn’t deployed yet.
-- Open the Vercel site, sign up / log in, load the dashboard. If the UI calls the wrong host, check `VITE_API_URL` and redeploy Vercel.
+- Open your live site (e.g. `https://fin-news.xyz`), sign up / log in, load the dashboard. If the UI calls the wrong host, check `VITE_API_URL` on your host (e.g. Vercel) and redeploy the frontend.
 
 ## 6. Optional env (Render)
 

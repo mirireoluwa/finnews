@@ -2,10 +2,11 @@
 #
 # After first deploy, set in the web service → Environment:
 #   NEWSAPI_API_KEY
-#   CORS_ALLOWED_ORIGINS=https://YOUR_APP.vercel.app   (no trailing slash; comma-separate multiple)
+#   CORS_ALLOWED_ORIGINS=https://fin-news.xyz   (no trailing slash; comma-separate multiple)
 # Optional:
 #   ALPHAVANTAGE_API_KEY
 #   CORS_ALLOW_VERCEL_PREVIEWS=true   # any https://*.vercel.app (preview deploys)
+#   FRONTEND_URL=https://fin-news.xyz   # password reset links (no trailing slash)
 #
 # Frontend: Vercel env VITE_API_URL=https://<this-service>.onrender.com (see DEPLOY.md)
 
@@ -39,6 +40,8 @@ services:
       - key: NEWSAPI_API_KEY
         sync: false
       - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: FRONTEND_URL
         sync: false
       - key: ALPHAVANTAGE_API_KEY
         sync: false

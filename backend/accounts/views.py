@@ -1,8 +1,15 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
+from urllib.parse import urlencode
 
+from django.conf import settings as django_settings
 from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -12,10 +19,14 @@ from rest_framework.views import APIView
 from .models import UserProfile, default_preferences
 from .serializers import (
   LoginSerializer,
+  PasswordResetConfirmSerializer,
+  PasswordResetRequestSerializer,
   ProfileUpdateSerializer,
   RegisterSerializer,
   user_to_client_dict,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class RegisterView(APIView):
@@ -87,3 +98,70 @@ class MeView(APIView):
     profile.save()
     user.refresh_from_db()
     return Response(user_to_client_dict(user))
+
+
+class PasswordResetRequestView(APIView):
+  """POST { email } — sends reset link if user exists (same response either way)."""
+
+  permission_classes = [AllowAny]
+  authentication_classes = []
+
+  def post(self, request, *args: Any, **kwargs: Any) -> Response:
+    ser = PasswordResetRequestSerializer(data=request.data)
+    ser.is_valid(raise_exception=True)
+    email = ser.validated_data["email"]
+    user = User.objects.filter(username=email).first()
+    if not user:
+      user = User.objects.filter(email__iexact=email).first()
+
+    if user:
+      front = (getattr(django_settings, "FRONTEND_URL", None) or "").strip().rstrip("/")
+      if not front:
+        logger.warning(
+          "Password reset for %s skipped: set FRONTEND_URL (e.g. https://fin-news.xyz).",
+          email,
+        )
+      else:
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        tok = default_token_generator.make_token(user)
+        reset_url = f"{front}/?{urlencode({'reset': '1', 'uid': uid, 'token': tok})}"
+        subject = "Reset your FinNews password"
+        body = (
+          f"Hi,\n\n"
+          f"Open this link to choose a new password for your FinNews account:\n\n"
+          f"{reset_url}\n\n"
+          f"If you did not ask for this, you can ignore this email.\n"
+        )
+        try:
+          send_mail(
+            subject,
+            body,
+            django_settings.DEFAULT_FROM_EMAIL,
+            [user.email or email],
+            fail_silently=False,
+          )
+        except Exception:
+          logger.exception("send_mail failed for password reset user_id=%s", user.pk)
+
+    return Response(
+      {
+        "detail": "If an account exists for that email, we sent password reset instructions.",
+      },
+      status=status.HTTP_200_OK,
+    )
+
+
+class PasswordResetConfirmView(APIView):
+  """POST { uid, token, new_password } — set new password from email link."""
+
+  permission_classes = [AllowAny]
+  authentication_classes = []
+
+  def post(self, request, *args: Any, **kwargs: Any) -> Response:
+    ser = PasswordResetConfirmSerializer(data=request.data)
+    ser.is_valid(raise_exception=True)
+    ser.save()
+    return Response(
+      {"detail": "Your password was reset. You can sign in with your new password."},
+      status=status.HTTP_200_OK,
+    )
