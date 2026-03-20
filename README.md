@@ -58,17 +58,15 @@ Do **not** commit `backend/.env` or real API keys (they are in `.gitignore`).
 
 Vercel hosts the **static React app** only. The **Django API** must run elsewhere (e.g. [Render](https://render.com), [Railway](https://railway.app), [Fly.io](https://fly.io), or your VPS).
 
-1. Push this repo to GitHub.
-2. In [Vercel](https://vercel.com) → **Add New Project** → import the repo.
-3. Set **Root Directory** to `client`.
-4. Framework: **Vite** (auto-detected). `vercel.json` enables SPA routing.
-5. **Environment variables** (Production):
+**Quick steps**
 
-   | Name            | Value                                      |
-   |-----------------|--------------------------------------------|
-   | `VITE_API_URL`  | Public URL of your Django app (no trailing slash), e.g. `https://finnews-api.onrender.com` |
+1. Import the GitHub repo in [Vercel](https://vercel.com) → **Add New Project**.
+2. Keep **Root Directory** at the **repo root** so Vercel uses the root **`vercel.json`** (builds `client/` → `client/dist`).  
+   *Alternatively*, set Root Directory to **`client`** and Vercel will use **`client/vercel.json`** instead.
+3. Add **`VITE_API_URL`** (Production): your Django origin with **no** trailing slash, e.g. `https://finnews-api.onrender.com`.
+4. Deploy. The app sends API requests to that host (see `client/src/main.jsx`).
 
-6. Deploy. Open the Vercel URL; the app will call `VITE_API_URL` for `/api/...`.
+More detail: **`VERCEL.md`**.
 
 ## Deploy backend (summary)
 

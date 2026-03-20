@@ -1,0 +1,5 @@
+# Speed up uploads — frontend is built from client/ only
+backend
+server
+**/.venv
+**/__pycache__
