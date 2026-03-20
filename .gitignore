@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+
+# Django
+*.sqlite3
+backend/db.sqlite3
+backend/staticfiles/
+
+# Env & secrets
+.env
+.env.local
+.env.*.local
+backend/.env
+
+# Node / Vite
+node_modules/
+client/dist/
+npm-debug.log*
+yarn-error.log*
+
+# IDE & OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,110 @@
+:root {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Dark theme – deep blue */
+  color-scheme: dark;
+  --bg: #0a1628;
+  --bg-elevated: #111f36;
+  --bg-glass: rgba(10, 22, 40, 0.94);
+  --border-subtle: rgba(56, 189, 248, 0.22);
+  --accent: #38bdf8;
+  --accent-soft: rgba(56, 189, 248, 0.14);
+  --accent-hover: #7dd3fc;
+  --text-primary: #e8f4fc;
+  --text-muted: #8eb4d4;
+  --badge-bg: rgba(56, 189, 248, 0.16);
+  /* Text on filled accent buttons */
+  --on-accent: #041c2f;
+  /* Sentiment / positive direction (sky, not green) */
+  --positive: #38bdf8;
+  --positive-soft: rgba(56, 189, 248, 0.12);
+  /* Two chart line colors (both blue family, no purple) */
+  --chart-line-1: #38bdf8;
+  --chart-line-2: #7dd3fc;
+
+  /* Bottom nav: one sky blue for active pill in both themes */
+  --nav-active-sky: #38bdf8;
+
+  /* Bottom navigation (dark) */
+  --nav-surface: var(--bg-glass);
+  --nav-border: var(--border-subtle);
+  --nav-active-bg: var(--nav-active-sky);
+  --nav-active-fg: var(--on-accent);
+  --nav-inactive-fg: var(--text-muted);
+  --nav-icon-ring: var(--border-subtle);
+  --nav-icon-well-active: rgba(255, 255, 255, 0.14);
+  --nav-icon-well-inactive: rgba(255, 255, 255, 0.22);
+}
+
+[data-theme="light"] {
+  /* Light theme – pastel blue */
+  color-scheme: light;
+  --bg: #e3f0fc;
+  --bg-elevated: #eef6ff;
+  --bg-glass: rgba(240, 249, 255, 0.94);
+  --border-subtle: rgba(37, 99, 235, 0.18);
+  --accent: #2563eb;
+  --accent-soft: rgba(37, 99, 235, 0.1);
+  --accent-hover: #1d4ed8;
+  --text-primary: #0c1929;
+  --text-muted: #4a6fa5;
+  --badge-bg: rgba(37, 99, 235, 0.08);
+  --on-accent: #f8fafc;
+  --positive: #2563eb;
+  --positive-soft: rgba(37, 99, 235, 0.1);
+  --chart-line-1: #2563eb;
+  --chart-line-2: #0ea5e9;
+
+  /* Bottom nav: exact same active sky + icon treatment as dark mode */
+  --nav-surface: rgba(224, 242, 254, 0.97);
+  --nav-border: rgba(56, 189, 248, 0.5);
+  --nav-active-bg: var(--nav-active-sky);
+  --nav-active-fg: #041c2f;
+  --nav-inactive-fg: #075985;
+  --nav-icon-ring: rgba(56, 189, 248, 0.55);
+  --nav-icon-well-active: rgba(255, 255, 255, 0.14);
+  --nav-icon-well-inactive: rgba(56, 189, 248, 0.35);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--bg);
+  color: var(--text-primary);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+a {
+  font-weight: 500;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+button {
+  font-family: inherit;
+}
+
+/* Themed inputs (watchlist search, etc.) */
+.fin-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
+.fin-input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}

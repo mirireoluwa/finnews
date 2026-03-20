@@ -1,0 +1,25 @@
+#root {
+  width: 100%;
+}
+
+.fin-skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100000;
+  padding: 10px 16px;
+  background: var(--accent, #38bdf8);
+  color: var(--on-accent, #041c2f);
+  font-weight: 800;
+  font-size: 14px;
+  border-radius: 0 0 8px 0;
+  text-decoration: none;
+}
+
+.fin-skip-link:focus {
+  left: 12px;
+  top: 12px;
+  outline: 2px solid var(--accent, #38bdf8);
+  outline-offset: 2px;
+}
+
