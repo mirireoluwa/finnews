@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import axios from "axios";
 import finnewsLogo from "../assets/finnews-logo.svg";
+import { FinNewsLogoSpinnerInline } from "./FinNewsLogoSpinner.jsx";
 import { patchAuthUser } from "../utils/authStorage.js";
 
 const SUGGESTED = [
@@ -78,6 +79,7 @@ export default function OnboardingFlow({
   const [avatarDataUrl, setAvatarDataUrl] = useState(user?.avatarDataUrl || null);
   const [profileNote, setProfileNote] = useState(user?.preferences?.profileNote || "");
   const [photoError, setPhotoError] = useState("");
+  const [finishing, setFinishing] = useState(false);
 
   const isLight = theme === "light";
 
@@ -159,6 +161,7 @@ export default function OnboardingFlow({
     };
 
     setPhotoError("");
+    setFinishing(true);
     try {
       const next = await patchAuthUser({
         name,
@@ -179,6 +182,8 @@ export default function OnboardingFlow({
       onFinished({ briefingMode: briefingChoice });
     } catch (e) {
       setPhotoError(e.message || "Could not save your profile. Try again.");
+    } finally {
+      setFinishing(false);
     }
   }
 
@@ -305,7 +310,8 @@ export default function OnboardingFlow({
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && runSearch()}
+                onKeyDown={(e) => e.key === "Enter" && !searching && runSearch()}
+                disabled={searching}
                 placeholder="e.g. Apple, Dangote…"
                 style={{
                   flex: 1,
@@ -316,10 +322,31 @@ export default function OnboardingFlow({
                   color: "var(--text-primary)",
                   fontSize: 14,
                   fontFamily: "inherit",
+                  opacity: searching ? 0.75 : 1,
                 }}
               />
-              <button type="button" onClick={runSearch} disabled={searching} style={{ ...btnPrimary, opacity: searching ? 0.7 : 1 }}>
-                {searching ? "…" : "Search"}
+              <button
+                type="button"
+                onClick={runSearch}
+                disabled={searching || !searchQuery.trim()}
+                style={{
+                  ...btnPrimary,
+                  opacity: searching || !searchQuery.trim() ? 0.7 : 1,
+                  cursor: searching || !searchQuery.trim() ? "not-allowed" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                }}
+              >
+                {searching ? (
+                  <>
+                    <FinNewsLogoSpinnerInline size={18} variant="onLight" />
+                    Searching…
+                  </>
+                ) : (
+                  "Search"
+                )}
               </button>
             </div>
             {searchError && (
@@ -415,12 +442,12 @@ export default function OnboardingFlow({
             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
               <button
                 type="button"
-                disabled={watchlist.length < 1}
+                disabled={watchlist.length < 1 || searching}
                 onClick={() => setStep(2)}
                 style={{
                   ...btnPrimary,
-                  opacity: watchlist.length < 1 ? 0.45 : 1,
-                  cursor: watchlist.length < 1 ? "not-allowed" : "pointer",
+                  opacity: watchlist.length < 1 || searching ? 0.45 : 1,
+                  cursor: watchlist.length < 1 || searching ? "not-allowed" : "pointer",
                 }}
               >
                 Continue
@@ -627,8 +654,28 @@ export default function OnboardingFlow({
               <button type="button" onClick={() => setStep(2)} style={btnGhost}>
                 Back
               </button>
-              <button type="button" onClick={finishOnboarding} style={btnPrimary}>
-                Start using FinNews
+              <button
+                type="button"
+                onClick={finishOnboarding}
+                disabled={finishing}
+                style={{
+                  ...btnPrimary,
+                  opacity: finishing ? 0.85 : 1,
+                  cursor: finishing ? "wait" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                }}
+              >
+                {finishing ? (
+                  <>
+                    <FinNewsLogoSpinnerInline size={18} variant="onLight" />
+                    Saving…
+                  </>
+                ) : (
+                  "Start using FinNews"
+                )}
               </button>
             </div>
           </div>

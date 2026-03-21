@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { FinNewsLogoSpinnerInline } from "./FinNewsLogoSpinner.jsx";
 import { patchAuthUser } from "../utils/authStorage.js";
 
 function initials(name) {
@@ -19,6 +20,8 @@ export default function ProfileMenu({
   const [view, setView] = useState("menu");
   const [editName, setEditName] = useState(user?.name || "");
   const [photoError, setPhotoError] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [avatarBusy, setAvatarBusy] = useState(false);
   const wrapRef = useRef(null);
 
   useEffect(() => {
@@ -49,11 +52,14 @@ export default function ProfileMenu({
     reader.onload = async () => {
       const dataUrl = reader.result;
       if (typeof dataUrl === "string") {
+        setAvatarBusy(true);
         try {
           const next = await patchAuthUser({ avatarDataUrl: dataUrl });
           setAuthUser(next);
         } catch (err) {
           setPhotoError(err.message || "Could not upload photo.");
+        } finally {
+          setAvatarBusy(false);
         }
       }
     };
@@ -68,12 +74,15 @@ export default function ProfileMenu({
       return;
     }
     setPhotoError("");
+    setSavingProfile(true);
     try {
       const next = await patchAuthUser({ name });
       setAuthUser(next);
       setView("menu");
     } catch (e) {
       setPhotoError(e.message || "Could not save.");
+    } finally {
+      setSavingProfile(false);
     }
   }
 
@@ -219,6 +228,7 @@ export default function ProfileMenu({
                 className="fin-input"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
+                disabled={savingProfile || avatarBusy}
                 style={{
                   width: "100%",
                   marginTop: 6,
@@ -230,21 +240,47 @@ export default function ProfileMenu({
                   color: "var(--text-primary)",
                   fontSize: 14,
                   boxSizing: "border-box",
+                  opacity: savingProfile || avatarBusy ? 0.65 : 1,
                 }}
               />
               <label style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)" }}>
                 Profile photo
               </label>
-              <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ marginTop: 8 }} />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoChange}
+                disabled={savingProfile || avatarBusy}
+                style={{ marginTop: 8, opacity: savingProfile || avatarBusy ? 0.5 : 1 }}
+              />
+              {avatarBusy ? (
+                <p
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    margin: "8px 0 0",
+                    fontSize: 12,
+                    color: "var(--text-muted)",
+                  }}
+                >
+                  <FinNewsLogoSpinnerInline size={14} variant="onDark" />
+                  Updating photo…
+                </p>
+              ) : null}
               {user?.avatarDataUrl && (
                 <button
                   type="button"
+                  disabled={savingProfile || avatarBusy}
                   onClick={async () => {
+                    setAvatarBusy(true);
                     try {
                       const next = await patchAuthUser({ avatarDataUrl: null });
                       setAuthUser(next);
                     } catch (err) {
                       setPhotoError(err.message || "Could not remove photo.");
+                    } finally {
+                      setAvatarBusy(false);
                     }
                   }}
                   style={{
@@ -254,9 +290,10 @@ export default function ProfileMenu({
                     border: "none",
                     color: "var(--accent)",
                     fontSize: 12,
-                    cursor: "pointer",
+                    cursor: savingProfile || avatarBusy ? "not-allowed" : "pointer",
                     padding: 0,
                     fontFamily: "inherit",
+                    opacity: savingProfile || avatarBusy ? 0.6 : 1,
                   }}
                 >
                   Remove photo
@@ -268,6 +305,7 @@ export default function ProfileMenu({
               <button
                 type="button"
                 onClick={saveProfile}
+                disabled={savingProfile || avatarBusy}
                 style={{
                   marginTop: 16,
                   width: "100%",
@@ -277,11 +315,23 @@ export default function ProfileMenu({
                   background: "var(--accent)",
                   color: "var(--on-accent)",
                   fontWeight: 800,
-                  cursor: "pointer",
+                  cursor: savingProfile || avatarBusy ? "wait" : "pointer",
                   fontFamily: "inherit",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  opacity: savingProfile || avatarBusy ? 0.9 : 1,
                 }}
               >
-                Save changes
+                {savingProfile ? (
+                  <>
+                    <FinNewsLogoSpinnerInline size={18} variant="onLight" />
+                    Saving…
+                  </>
+                ) : (
+                  "Save changes"
+                )}
               </button>
             </div>
           )}

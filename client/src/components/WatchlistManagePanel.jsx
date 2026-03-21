@@ -23,6 +23,8 @@ const btnPrimary = {
   whiteSpace: "nowrap",
 };
 
+import { FinNewsLogoSpinnerInline } from "./FinNewsLogoSpinner.jsx";
+
 const btnGhost = {
   border: "1px solid var(--border-subtle)",
   borderRadius: 10,
@@ -141,9 +143,15 @@ export default function WatchlistManagePanel({
             className="fin-input"
             value={searchQuery}
             onChange={(e) => onSearchQueryChange(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && onSearch()}
+            onKeyDown={(e) => e.key === "Enter" && !searching && onSearch()}
+            disabled={searching}
             placeholder="Search by company name or ticker (Alpha Vantage)…"
-            style={{ ...inputBase, flex: "1 1 200px", minWidth: 0 }}
+            style={{
+              ...inputBase,
+              flex: "1 1 200px",
+              minWidth: 0,
+              opacity: searching ? 0.75 : 1,
+            }}
           />
           <button
             type="button"
@@ -153,9 +161,20 @@ export default function WatchlistManagePanel({
               ...btnPrimary,
               opacity: searchQuery.trim() && !searching ? 1 : 0.45,
               cursor: searchQuery.trim() && !searching ? "pointer" : "not-allowed",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
             }}
           >
-            {searching ? "Searching…" : "Search"}
+            {searching ? (
+              <>
+                <FinNewsLogoSpinnerInline size={18} variant="onLight" />
+                Searching…
+              </>
+            ) : (
+              "Search"
+            )}
           </button>
         </div>
 

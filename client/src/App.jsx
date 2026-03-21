@@ -16,6 +16,7 @@ import {
 } from "./utils/authStorage.js";
 import { formatAxiosError } from "./utils/axiosErrors.js";
 import finnewsLogo from "./assets/finnews-logo.svg";
+import FinNewsLogoSpinner, { FinNewsLogoSpinnerInline } from "./components/FinNewsLogoSpinner.jsx";
 import "./App.css";
 
 const DEFAULT_WATCHLIST = ["Dangote Cement", "MTN Nigeria", "Apple", "Tesla", "Zenith Bank"];
@@ -515,12 +516,10 @@ export default function App() {
           alignItems: "center",
           justifyContent: "center",
           background: "var(--bg)",
-          color: "var(--text-muted)",
           fontFamily: "'Inter',system-ui,sans-serif",
-          fontSize: 14,
         }}
       >
-        Loading…
+        <FinNewsLogoSpinner size={56} variant="onDark" label="Checking your session…" />
       </div>
     );
   }
@@ -657,6 +656,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={fetchNews}
+                        disabled={loading}
                         style={{
                           background: "none",
                           border: "none",
@@ -665,8 +665,9 @@ export default function App() {
                           color: "var(--accent)",
                           font: "inherit",
                           fontWeight: 700,
-                          cursor: "pointer",
+                          cursor: loading ? "not-allowed" : "pointer",
                           textDecoration: "underline",
+                          opacity: loading ? 0.5 : 1,
                         }}
                       >
                         switch to live updates
@@ -822,6 +823,7 @@ export default function App() {
                       fetchNews();
                       setAppHeaderMenuOpen(false);
                     }}
+                    disabled={loading}
                     style={{
                       alignSelf: "flex-start",
                       background: "none",
@@ -831,8 +833,9 @@ export default function App() {
                       font: "inherit",
                       fontWeight: 700,
                       fontSize: 12,
-                      cursor: "pointer",
+                      cursor: loading ? "not-allowed" : "pointer",
                       textDecoration: "underline",
+                      opacity: loading ? 0.5 : 1,
                     }}
                   >
                     Switch to live updates
@@ -1090,6 +1093,7 @@ export default function App() {
             >
               <button
                 onClick={fetchDaily}
+                disabled={loading}
                 style={{
                   background: "var(--accent)",
                   color: "var(--on-accent)",
@@ -1098,14 +1102,27 @@ export default function App() {
                   borderRadius: 10,
                   fontSize: 14,
                   fontWeight: 800,
-                  cursor: "pointer",
+                  cursor: loading ? "wait" : "pointer",
                   letterSpacing: "-0.01em",
+                  opacity: loading ? 0.75 : 1,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
                 }}
               >
-                Get Today's Dashboard →
+                {loading ? (
+                  <>
+                    <FinNewsLogoSpinnerInline size={20} variant="onLight" />
+                    Loading…
+                  </>
+                ) : (
+                  "Get Today's Dashboard →"
+                )}
               </button>
               <button
                 onClick={fetchNews}
+                disabled={loading}
                 style={{
                   background: "transparent",
                   color: "var(--text-primary)",
@@ -1114,11 +1131,23 @@ export default function App() {
                   borderRadius: 10,
                   fontSize: 14,
                   fontWeight: 800,
-                  cursor: "pointer",
+                  cursor: loading ? "wait" : "pointer",
                   letterSpacing: "-0.01em",
+                  opacity: loading ? 0.75 : 1,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
                 }}
               >
-                Live now
+                {loading ? (
+                  <>
+                    <FinNewsLogoSpinnerInline size={20} variant="onDark" />
+                    Loading…
+                  </>
+                ) : (
+                  "Live now"
+                )}
               </button>
             </div>
           </div>
@@ -1126,43 +1155,12 @@ export default function App() {
 
         {/* Loading */}
         {loading && (
-          <div style={{ textAlign: "center", padding: "72px 0" }}>
-            <div
-              style={{
-                fontSize: 11,
-                color: "var(--text-muted)",
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                marginBottom: 20,
-              }}
-            >
-              Searching the web
-            </div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                gap: 6,
-                marginBottom: 20,
-              }}
-            >
-              {[0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: "50%",
-                    background: "var(--accent)",
-                    animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
-                  }}
-                />
-              ))}
-            </div>
-            <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
-              Gathering global & NGX news, checking your watchlist…
-            </p>
-            <style>{`@keyframes pulse{0%,100%{opacity:0.2}50%{opacity:1}}`}</style>
+          <div style={{ display: "flex", justifyContent: "center", padding: "56px 16px 72px" }}>
+            <FinNewsLogoSpinner
+              size={52}
+              variant="onDark"
+              label="Gathering global & NGX news and your watchlist…"
+            />
           </div>
         )}
 
@@ -1274,6 +1272,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={fetchNews}
+                        disabled={loading}
                         style={{
                           background: "none",
                           border: "none",
@@ -1281,8 +1280,9 @@ export default function App() {
                           color: "var(--accent)",
                           font: "inherit",
                           fontWeight: 700,
-                          cursor: "pointer",
+                          cursor: loading ? "not-allowed" : "pointer",
                           textDecoration: "underline",
+                          opacity: loading ? 0.5 : 1,
                         }}
                       >
                         Live updates
@@ -1314,6 +1314,7 @@ export default function App() {
               </div>
               <button
                 onClick={briefingMode === "live" ? fetchNews : fetchDaily}
+                disabled={loading}
                 style={{
                   background: "transparent",
                   border: "1px solid var(--border-subtle)",
@@ -1321,11 +1322,24 @@ export default function App() {
                   fontSize: 12,
                   padding: "5px 12px",
                   borderRadius: 6,
-                  cursor: "pointer",
+                  cursor: loading ? "wait" : "pointer",
                   flexShrink: 0,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  opacity: loading ? 0.85 : 1,
                 }}
               >
-                {briefingMode === "live" ? "Refresh" : "Refresh Snapshot"}
+                {loading ? (
+                  <>
+                    <FinNewsLogoSpinnerInline size={16} variant="onDark" />
+                    {briefingMode === "live" ? "Refreshing…" : "Loading…"}
+                  </>
+                ) : briefingMode === "live" ? (
+                  "Refresh"
+                ) : (
+                  "Refresh Snapshot"
+                )}
               </button>
             </div>
 

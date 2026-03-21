@@ -9,6 +9,7 @@ import {
 } from "../utils/authStorage.js";
 import { passwordMeetsAllRequirements } from "../utils/passwordRules.js";
 import finnewsLogo from "../assets/finnews-logo.svg";
+import { FinNewsLogoSpinnerInline } from "../components/FinNewsLogoSpinner.jsx";
 
 const fieldLabel = {
   display: "block",
@@ -60,8 +61,27 @@ export default function AuthPage({ onAuthenticated }) {
   const [resetToken, setResetToken] = useState("");
   const [forgotSent, setForgotSent] = useState(false);
   const [authBanner, setAuthBanner] = useState({ type: "", text: "" });
+  const [submitting, setSubmitting] = useState(false);
 
   const prefersLight = useSystemPrefersLight();
+  const submitBtnStyle = (disabled) => ({
+    width: "100%",
+    padding: "14px 20px",
+    borderRadius: 12,
+    border: "none",
+    background: "var(--accent)",
+    color: "var(--on-accent)",
+    fontSize: 15,
+    fontWeight: 800,
+    cursor: disabled ? "wait" : "pointer",
+    fontFamily: "inherit",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    minHeight: 48,
+    opacity: disabled ? 0.92 : 1,
+  });
 
   useEffect(() => {
     try {
@@ -94,11 +114,14 @@ export default function AuthPage({ onAuthenticated }) {
       setFormError("Password must be at least 8 characters.");
       return;
     }
+    setSubmitting(true);
     try {
       const { user } = await loginAccount({ email: email.trim(), password });
       onAuthenticated(user);
     } catch (err) {
       setFormError(err.message || "Could not sign in.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -125,6 +148,7 @@ export default function AuthPage({ onAuthenticated }) {
       setFormError("Please agree to the Terms of Service and Privacy Policy.");
       return;
     }
+    setSubmitting(true);
     try {
       const { user } = await registerAccount({
         name: fullName.trim(),
@@ -135,6 +159,8 @@ export default function AuthPage({ onAuthenticated }) {
       onAuthenticated(user);
     } catch (err) {
       setFormError(err.message || "Could not create account.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -145,11 +171,14 @@ export default function AuthPage({ onAuthenticated }) {
       setFormError("Enter your email address.");
       return;
     }
+    setSubmitting(true);
     try {
       await requestPasswordReset({ email: email.trim() });
       setForgotSent(true);
     } catch (err) {
       setFormError(err.message || "Could not send reset email.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -168,6 +197,7 @@ export default function AuthPage({ onAuthenticated }) {
       setFormError("Passwords do not match.");
       return;
     }
+    setSubmitting(true);
     try {
       await confirmPasswordReset({
         uid: resetUid,
@@ -183,6 +213,8 @@ export default function AuthPage({ onAuthenticated }) {
       setAuthBanner({ type: "ok", text: "Password updated. Sign in with your new password." });
     } catch (err) {
       setFormError(err.message || "Could not reset password.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -277,7 +309,7 @@ export default function AuthPage({ onAuthenticated }) {
                     {authBanner.text}
                   </p>
                 )}
-                <form onSubmit={handleLogin}>
+                <form onSubmit={handleLogin} aria-busy={submitting}>
                   <div style={{ marginBottom: 18 }}>
                     <label style={fieldLabel}>
                       Email address <span style={{ color: "var(--accent)" }}>*</span>
@@ -289,6 +321,7 @@ export default function AuthPage({ onAuthenticated }) {
                       placeholder="you@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      disabled={submitting}
                       style={inputStyle}
                     />
                   </div>
@@ -304,12 +337,14 @@ export default function AuthPage({ onAuthenticated }) {
                         placeholder="Enter your password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        disabled={submitting}
                         style={{ ...inputStyle, paddingRight: 44 }}
                       />
                       <button
                         type="button"
                         aria-label={showPassword ? "Hide password" : "Show password"}
                         onClick={() => setShowPassword((v) => !v)}
+                        disabled={submitting}
                         style={{
                           position: "absolute",
                           right: 10,
@@ -318,9 +353,10 @@ export default function AuthPage({ onAuthenticated }) {
                           background: "none",
                           border: "none",
                           color: "var(--accent)",
-                          cursor: "pointer",
+                          cursor: submitting ? "not-allowed" : "pointer",
                           fontSize: 13,
                           padding: 4,
+                          opacity: submitting ? 0.5 : 1,
                         }}
                       >
                         {showPassword ? "Hide" : "Show"}
@@ -335,14 +371,16 @@ export default function AuthPage({ onAuthenticated }) {
                       setForgotSent(false);
                       setAuthBanner({ type: "", text: "" });
                     }}
+                    disabled={submitting}
                     style={{
                       background: "none",
                       border: "none",
                       color: "var(--accent)",
                       fontSize: 13,
                       fontWeight: 600,
-                      cursor: "pointer",
+                      cursor: submitting ? "not-allowed" : "pointer",
                       padding: "4px 0 20px",
+                      opacity: submitting ? 0.5 : 1,
                     }}
                   >
                     Forgot your password?
@@ -350,22 +388,15 @@ export default function AuthPage({ onAuthenticated }) {
                   {formError && (
                     <p style={{ color: "#f87171", fontSize: 13, margin: "0 0 16px" }}>{formError}</p>
                   )}
-                  <button
-                    type="submit"
-                    style={{
-                      width: "100%",
-                      padding: "14px 20px",
-                      borderRadius: 12,
-                      border: "none",
-                      background: "var(--accent)",
-                      color: "var(--on-accent)",
-                      fontSize: 15,
-                      fontWeight: 800,
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    Log in
+                  <button type="submit" disabled={submitting} style={submitBtnStyle(submitting)}>
+                    {submitting ? (
+                      <>
+                        <FinNewsLogoSpinnerInline size={22} variant="onLight" />
+                        Signing in…
+                      </>
+                    ) : (
+                      "Log in"
+                    )}
                   </button>
                 </form>
                 <p style={{ marginTop: 24, fontSize: 14, color: subtitleColor }}>
@@ -377,15 +408,17 @@ export default function AuthPage({ onAuthenticated }) {
                       setFormError("");
                       setAuthBanner({ type: "", text: "" });
                     }}
+                    disabled={submitting}
                     style={{
                       background: "none",
                       border: "none",
                       color: "var(--accent)",
                       fontWeight: 700,
-                      cursor: "pointer",
+                      cursor: submitting ? "not-allowed" : "pointer",
                       padding: 0,
                       font: "inherit",
                       textDecoration: "underline",
+                      opacity: submitting ? 0.5 : 1,
                     }}
                   >
                     Create one
@@ -398,7 +431,7 @@ export default function AuthPage({ onAuthenticated }) {
               </>
             ) : mode === "forgot" ? (
               <>
-                <form onSubmit={handleForgotSubmit}>
+                <form onSubmit={handleForgotSubmit} aria-busy={submitting}>
                   <p style={{ fontSize: 14, color: subtitleColor, margin: "0 0 18px", lineHeight: 1.5 }}>
                     Enter the email for your account. If it exists, we&apos;ll send a link to reset your password.
                   </p>
@@ -413,6 +446,7 @@ export default function AuthPage({ onAuthenticated }) {
                       placeholder="you@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      disabled={submitting}
                       style={inputStyle}
                     />
                   </div>
@@ -425,22 +459,15 @@ export default function AuthPage({ onAuthenticated }) {
                   {formError && (
                     <p style={{ color: "#f87171", fontSize: 13, margin: "0 0 16px" }}>{formError}</p>
                   )}
-                  <button
-                    type="submit"
-                    style={{
-                      width: "100%",
-                      padding: "14px 20px",
-                      borderRadius: 12,
-                      border: "none",
-                      background: "var(--accent)",
-                      color: "var(--on-accent)",
-                      fontSize: 15,
-                      fontWeight: 800,
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    Send reset link
+                  <button type="submit" disabled={submitting} style={submitBtnStyle(submitting)}>
+                    {submitting ? (
+                      <>
+                        <FinNewsLogoSpinnerInline size={22} variant="onLight" />
+                        Sending…
+                      </>
+                    ) : (
+                      "Send reset link"
+                    )}
                   </button>
                 </form>
                 <p style={{ marginTop: 24, fontSize: 14, color: subtitleColor }}>
@@ -451,15 +478,17 @@ export default function AuthPage({ onAuthenticated }) {
                       setFormError("");
                       setAuthBanner({ type: "", text: "" });
                     }}
+                    disabled={submitting}
                     style={{
                       background: "none",
                       border: "none",
                       color: "var(--accent)",
                       fontWeight: 700,
-                      cursor: "pointer",
+                      cursor: submitting ? "not-allowed" : "pointer",
                       padding: 0,
                       font: "inherit",
                       textDecoration: "underline",
+                      opacity: submitting ? 0.5 : 1,
                     }}
                   >
                     Back to sign in
@@ -468,7 +497,7 @@ export default function AuthPage({ onAuthenticated }) {
               </>
             ) : mode === "reset" ? (
               <>
-                <form onSubmit={handleResetSubmit}>
+                <form onSubmit={handleResetSubmit} aria-busy={submitting}>
                   <p style={{ fontSize: 14, color: subtitleColor, margin: "0 0 18px", lineHeight: 1.5 }}>
                     Choose a new password for your account.
                   </p>
@@ -484,12 +513,14 @@ export default function AuthPage({ onAuthenticated }) {
                         placeholder="At least 8 characters"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        disabled={submitting}
                         style={{ ...inputStyle, paddingRight: 44 }}
                       />
                       <button
                         type="button"
                         aria-label={showPassword ? "Hide password" : "Show password"}
                         onClick={() => setShowPassword((v) => !v)}
+                        disabled={submitting}
                         style={{
                           position: "absolute",
                           right: 10,
@@ -498,9 +529,10 @@ export default function AuthPage({ onAuthenticated }) {
                           background: "none",
                           border: "none",
                           color: "var(--accent)",
-                          cursor: "pointer",
+                          cursor: submitting ? "not-allowed" : "pointer",
                           fontSize: 13,
                           padding: 4,
+                          opacity: submitting ? 0.5 : 1,
                         }}
                       >
                         {showPassword ? "Hide" : "Show"}
@@ -519,28 +551,22 @@ export default function AuthPage({ onAuthenticated }) {
                       placeholder="Repeat password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
+                      disabled={submitting}
                       style={inputStyle}
                     />
                   </div>
                   {formError && (
                     <p style={{ color: "#f87171", fontSize: 13, margin: "0 0 16px" }}>{formError}</p>
                   )}
-                  <button
-                    type="submit"
-                    style={{
-                      width: "100%",
-                      padding: "14px 20px",
-                      borderRadius: 12,
-                      border: "none",
-                      background: "var(--accent)",
-                      color: "var(--on-accent)",
-                      fontSize: 15,
-                      fontWeight: 800,
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    Update password
+                  <button type="submit" disabled={submitting} style={submitBtnStyle(submitting)}>
+                    {submitting ? (
+                      <>
+                        <FinNewsLogoSpinnerInline size={22} variant="onLight" />
+                        Updating…
+                      </>
+                    ) : (
+                      "Update password"
+                    )}
                   </button>
                 </form>
                 <p style={{ marginTop: 24, fontSize: 14, color: subtitleColor }}>
@@ -555,15 +581,17 @@ export default function AuthPage({ onAuthenticated }) {
                       setResetToken("");
                       setAuthBanner({ type: "", text: "" });
                     }}
+                    disabled={submitting}
                     style={{
                       background: "none",
                       border: "none",
                       color: "var(--accent)",
                       fontWeight: 700,
-                      cursor: "pointer",
+                      cursor: submitting ? "not-allowed" : "pointer",
                       padding: 0,
                       font: "inherit",
                       textDecoration: "underline",
+                      opacity: submitting ? 0.5 : 1,
                     }}
                   >
                     Back to sign in
@@ -572,7 +600,7 @@ export default function AuthPage({ onAuthenticated }) {
               </>
             ) : (
               <>
-                <form onSubmit={handleSignUp}>
+                <form onSubmit={handleSignUp} aria-busy={submitting}>
                   <div style={{ marginBottom: 18 }}>
                     <label style={fieldLabel}>
                       Full name <span style={{ color: "var(--accent)" }}>*</span>
@@ -584,6 +612,7 @@ export default function AuthPage({ onAuthenticated }) {
                       placeholder="e.g. Ada Okafor"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
+                      disabled={submitting}
                       style={inputStyle}
                     />
                   </div>
@@ -598,6 +627,7 @@ export default function AuthPage({ onAuthenticated }) {
                       placeholder="you@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      disabled={submitting}
                       style={inputStyle}
                     />
                   </div>
@@ -610,6 +640,7 @@ export default function AuthPage({ onAuthenticated }) {
                       placeholder="+234 …"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
+                      disabled={submitting}
                       style={inputStyle}
                     />
                   </div>
@@ -625,12 +656,14 @@ export default function AuthPage({ onAuthenticated }) {
                         placeholder="At least 8 characters"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        disabled={submitting}
                         style={{ ...inputStyle, paddingRight: 44 }}
                       />
                       <button
                         type="button"
                         aria-label={showPassword ? "Hide password" : "Show password"}
                         onClick={() => setShowPassword((v) => !v)}
+                        disabled={submitting}
                         style={{
                           position: "absolute",
                           right: 10,
@@ -639,9 +672,10 @@ export default function AuthPage({ onAuthenticated }) {
                           background: "none",
                           border: "none",
                           color: "var(--accent)",
-                          cursor: "pointer",
+                          cursor: submitting ? "not-allowed" : "pointer",
                           fontSize: 13,
                           padding: 4,
+                          opacity: submitting ? 0.5 : 1,
                         }}
                       >
                         {showPassword ? "Hide" : "Show"}
@@ -660,6 +694,7 @@ export default function AuthPage({ onAuthenticated }) {
                       placeholder="Repeat password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
+                      disabled={submitting}
                       style={inputStyle}
                     />
                     {confirmPassword.length > 0 && (
@@ -686,13 +721,15 @@ export default function AuthPage({ onAuthenticated }) {
                       fontSize: 13,
                       color: subtitleColor,
                       marginBottom: 20,
-                      cursor: "pointer",
+                      cursor: submitting ? "not-allowed" : "pointer",
+                      opacity: submitting ? 0.7 : 1,
                     }}
                   >
                     <input
                       type="checkbox"
                       checked={agreedTerms}
                       onChange={(e) => setAgreedTerms(e.target.checked)}
+                      disabled={submitting}
                       style={{ marginTop: 3 }}
                     />
                     <span>
@@ -705,22 +742,15 @@ export default function AuthPage({ onAuthenticated }) {
                   {formError && (
                     <p style={{ color: "#f87171", fontSize: 13, margin: "0 0 16px" }}>{formError}</p>
                   )}
-                  <button
-                    type="submit"
-                    style={{
-                      width: "100%",
-                      padding: "14px 20px",
-                      borderRadius: 12,
-                      border: "none",
-                      background: "var(--accent)",
-                      color: "var(--on-accent)",
-                      fontSize: 15,
-                      fontWeight: 800,
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    Create account
+                  <button type="submit" disabled={submitting} style={submitBtnStyle(submitting)}>
+                    {submitting ? (
+                      <>
+                        <FinNewsLogoSpinnerInline size={22} variant="onLight" />
+                        Creating account…
+                      </>
+                    ) : (
+                      "Create account"
+                    )}
                   </button>
                 </form>
                 <p style={{ marginTop: 24, fontSize: 14, color: subtitleColor }}>
@@ -732,15 +762,17 @@ export default function AuthPage({ onAuthenticated }) {
                       setFormError("");
                       setAuthBanner({ type: "", text: "" });
                     }}
+                    disabled={submitting}
                     style={{
                       background: "none",
                       border: "none",
                       color: "var(--accent)",
                       fontWeight: 700,
-                      cursor: "pointer",
+                      cursor: submitting ? "not-allowed" : "pointer",
                       padding: 0,
                       font: "inherit",
                       textDecoration: "underline",
+                      opacity: submitting ? 0.5 : 1,
                     }}
                   >
                     Log in

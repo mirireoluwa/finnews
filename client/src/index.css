@@ -114,3 +114,18 @@ button {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
+
+/* FinNews logo loading spinner */
+@keyframes finnews-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.finnews-logo-spinner-rotate {
+  animation: finnews-logo-spin 0.95s linear infinite;
+  transform-origin: 50% 50%;
+}
