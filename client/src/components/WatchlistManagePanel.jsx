@@ -145,7 +145,7 @@ export default function WatchlistManagePanel({
             onChange={(e) => onSearchQueryChange(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !searching && onSearch()}
             disabled={searching}
-            placeholder="Search by company name or ticker (Alpha Vantage)…"
+            placeholder="Search by company name or ticker…"
             style={{
               ...inputBase,
               flex: "1 1 200px",

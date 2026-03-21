@@ -20,7 +20,7 @@ Vercel and Render both deploy from Git.
    |----------|--------|
    | `NEWSAPI_API_KEY` | Required for live headlines (production use may need a paid NewsAPI plan). |
    | `CORS_ALLOWED_ORIGINS` | Your live site origin(s), comma-separated, **no trailing slashes**, e.g. `https://fin-news.xyz` (add `http://localhost:5173` for local dev if needed). |
-   | `ALPHAVANTAGE_API_KEY` | Optional (company search). |
+   | `ALPHAVANTAGE_API_KEY` | **Required for watchlist / onboarding company search** (symbol lookup). Without it, search shows a friendly “unavailable” message. Free tier is rate-limited; operators should check Render logs for upstream `Note` / errors. |
    | **`FRONTEND_URL`** | **Your public app URL** (no trailing slash), e.g. `https://fin-news.xyz` — used in **forgot-password** emails. Without it, reset requests are accepted but no email is sent (check logs). |
    | `EMAIL_HOST`, `EMAIL_HOST_PASSWORD`, … | Optional SMTP. If omitted, reset emails go to the **server console** (see Render logs for the link). **Gmail:** `EMAIL_HOST=smtp.gmail.com`, `EMAIL_PORT=587`, `EMAIL_USE_TLS=true`, `EMAIL_HOST_USER=your@gmail.com`, `EMAIL_HOST_PASSWORD=` [App Password](https://support.google.com/accounts/answer/185833) (not your normal Gmail password). `DEFAULT_FROM_EMAIL=FinNews <your@gmail.com>`. |
 

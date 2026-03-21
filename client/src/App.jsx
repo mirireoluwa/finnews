@@ -24,30 +24,18 @@ const DEFAULT_WATCHLIST = ["Dangote Cement", "MTN Nigeria", "Apple", "Tesla", "Z
 /** Max width for sticky header and main column (aligned). */
 const LAYOUT_MAX_WIDTH = 1280;
 
+/** Short, non-technical copy for the demo-headlines banner (operators see logs). */
 function mockDataHelpText(meta) {
   if (!meta || meta.mode !== "mock") return "";
   const reason = meta.mock_reason;
-  const detail = meta.mock_detail;
-  if (reason === "newsapi_http_error" && detail && String(detail).includes("429")) {
-    return (
-      "NewsAPI rate limit hit (free tier: ~100 requests / 24h). Wait for the quota window to reset, reduce refreshes, or upgrade at newsapi.org. " +
-      "After it works again, use Live now or clear cached snapshots."
-    );
-  }
   const byReason = {
     missing_newsapi_key:
-      "Create backend/.env next to manage.py with one line (no quotes): NEWSAPI_API_KEY=your_key. Register at newsapi.org/register. Restart runserver (Ctrl+C, then python manage.py runserver). Verify: python manage.py check_newsapi_env. Then use Live now.",
-    newsapi_http_error: detail
-      ? `NewsAPI: ${detail}. Check Render logs or run: python manage.py check_newsapi_env --ping (local).`
-      : "NewsAPI could not return live headlines from your server (wrong key, quota, or free developer keys blocked outside localhost). On Render, you usually need a NewsAPI plan that allows production / server requests. Set NEWSAPI_API_KEY on Render and check logs.",
-    newsapi_api_error: detail
-      ? `NewsAPI: ${detail}`
-      : "NewsAPI returned an error in the response body. Check the Django log.",
-    network_error:
-      "The server could not reach newsapi.org (offline, DNS, or firewall).",
-    unknown: detail
-      ? `Details: ${detail}`
-      : "See the Django server log for the exception that triggered demo data.",
+      "Live headlines aren’t available in this environment yet, so we’re showing sample stories.",
+    newsapi_http_error:
+      "The news feed hit a limit or couldn’t be reached. Try again later, or tap Live now in the header after a short wait.",
+    newsapi_api_error: "The news service returned an error. Try refreshing in a little while.",
+    network_error: "We couldn’t reach the news service from the server. Try again later.",
+    unknown: "Something prevented live headlines from loading. Sample stories are shown so you can keep using the app.",
   };
   return byReason[reason] || byReason.unknown;
 }
@@ -249,9 +237,7 @@ export default function App() {
       const nowStr = new Date().toLocaleTimeString();
       setLastFetched(nowStr);
       if (next?.meta?.mode === "mock") {
-        setLiveBanner(
-          `Updated ${nowStr} — demo headlines only (NewsAPI not available from this server or quota exceeded).`
-        );
+        setLiveBanner(`Updated ${nowStr} — sample headlines (live feed unavailable)`);
       } else {
         setLiveBanner(`Updated ${nowStr}`);
       }
@@ -260,15 +246,13 @@ export default function App() {
       const status = e.response?.status;
       const detail = e.response?.data?.detail || e.response?.data?.error;
       if (status === 503) {
-        setError(
-          "Service temporarily unavailable. Check backend API keys (NEWSAPI/Alpha Vantage) and try again."
-        );
+        setError("This isn’t available right now. Please try again in a few minutes.");
       } else if (status === 502) {
-        setError("Upstream provider error. Try again in a moment.");
-      } else if (detail) {
+        setError("We couldn’t load fresh content. Please try again shortly.");
+      } else if (detail && typeof detail === "string") {
         setError(detail);
       } else {
-        setError(formatAxiosError(e, "Failed to fetch live news."));
+        setError(formatAxiosError(e, "We couldn’t load the briefing. Please try again."));
       }
     } finally {
       setLoading(false);
@@ -306,15 +290,13 @@ export default function App() {
       const status = e.response?.status;
       const detail = e.response?.data?.detail || e.response?.data?.error;
       if (status === 503) {
-        setError(
-          "Service temporarily unavailable. Check backend API keys (NEWSAPI/Alpha Vantage) and try again."
-        );
+        setError("This isn’t available right now. Please try again in a few minutes.");
       } else if (status === 502) {
-        setError("Upstream provider error. Try again in a moment.");
-      } else if (detail) {
+        setError("We couldn’t load your dashboard. Please try again shortly.");
+      } else if (detail && typeof detail === "string") {
         setError(detail);
       } else {
-        setError(formatAxiosError(e, "Failed to fetch daily briefing."));
+        setError(formatAxiosError(e, "We couldn’t load the dashboard. Please try again."));
       }
     } finally {
       setLoading(false);
@@ -346,11 +328,19 @@ export default function App() {
       const status = e.response?.status;
       const detail = e.response?.data?.detail || e.response?.data?.error;
       if (status === 503) {
-        setSearchError("Company search unavailable. Set ALPHAVANTAGE_API_KEY on the backend.");
-      } else if (detail) {
+        setSearchError(
+          (typeof detail === "string" && detail) ||
+            "Search is busy or unavailable. Try again in a minute, or add the company with “Add as typed”."
+        );
+      } else if (status === 502) {
+        setSearchError(
+          (typeof detail === "string" && detail) ||
+            "We couldn’t complete that search. Try again shortly, or add the name manually."
+        );
+      } else if (typeof detail === "string" && detail) {
         setSearchError(detail);
       } else {
-        setSearchError(formatAxiosError(e, "Failed to search for companies."));
+        setSearchError(formatAxiosError(e, "Something went wrong. Try again, or add the company manually."));
       }
       setSearchResults([]);
     } finally {
@@ -1179,8 +1169,8 @@ export default function App() {
               ⚠ {error}
             </p>
             <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6 }}>
-              Tip: if this keeps happening, confirm your backend is running and your API keys are set
-              (NEWSAPI_API_KEY, ALPHAVANTAGE_API_KEY). For details, check the Django server logs.
+              If this keeps happening, wait a few minutes and try again, or switch between daily and live from the
+              header.
             </p>
           </div>
         )}
@@ -1211,7 +1201,7 @@ export default function App() {
                     color: "#fbbf24",
                   }}
                 >
-                  You’re viewing demo (mock) headlines — not live NewsAPI results
+                  You’re viewing sample headlines — not a live news feed
                 </p>
                 <p
                   style={{
@@ -1231,9 +1221,8 @@ export default function App() {
                     lineHeight: 1.5,
                   }}
                 >
-                  Daily mode may reuse today&apos;s snapshot stored on the server. After fixing NewsAPI on
-                  Render, use <strong>Live now</strong> to pull fresh headlines (locally you can also clear
-                  <code style={{ fontSize: 11 }}> db.sqlite3</code> if you use SQLite).
+                  Daily mode may use today&apos;s saved snapshot. Use <strong>Live now</strong> in the header when
+                  you want the latest headlines.
                 </p>
               </div>
             )}
@@ -1412,9 +1401,7 @@ export default function App() {
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     <div>
                       <span style={{ fontWeight: 700, color: "var(--text-primary)" }}>News</span>
-                      <span style={{ color: "var(--text-muted)", marginLeft: 8 }}>
-                        NewsAPI.org (global + NGX)
-                      </span>
+                      <span style={{ color: "var(--text-muted)", marginLeft: 8 }}>Headlines (global + NGX)</span>
                       {data?.meta?.mode && (
                         <span
                           style={{
@@ -1430,9 +1417,7 @@ export default function App() {
                     </div>
                     <div>
                       <span style={{ fontWeight: 700, color: "var(--text-primary)" }}>Company Search</span>
-                      <span style={{ color: "var(--text-muted)", marginLeft: 8 }}>
-                        Alpha Vantage
-                      </span>
+                      <span style={{ color: "var(--text-muted)", marginLeft: 8 }}>Symbol lookup</span>
                     </div>
                   </div>
                 </div>

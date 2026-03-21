@@ -175,7 +175,7 @@ export default function SummaryPage({
             </div>
             <div>
               <span style={{ fontWeight: 700, color: "var(--text-primary)" }}>Company Search</span>
-              <span style={{ color: "var(--text-muted)", marginLeft: 8 }}>Alpha Vantage</span>
+              <span style={{ color: "var(--text-muted)", marginLeft: 8 }}>Symbol lookup</span>
             </div>
           </div>
         </div>

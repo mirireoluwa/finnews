@@ -104,9 +104,19 @@ export default function OnboardingFlow({
       const status = e.response?.status;
       const detail = e.response?.data?.detail;
       if (status === 503) {
-        setSearchError("Search needs ALPHAVANTAGE_API_KEY on the server — add a company manually below.");
+        setSearchError(
+          (typeof detail === "string" && detail) ||
+            "Search isn’t available right now. Try again in a minute, or add a company from the list below."
+        );
+      } else if (status === 502) {
+        setSearchError(
+          (typeof detail === "string" && detail) ||
+            "We couldn’t look that up. Try again shortly, or type a name manually."
+        );
       } else {
-        setSearchError(detail || e.message || "Search failed.");
+        setSearchError(
+          (typeof detail === "string" && detail) || "Something went wrong. Try again or pick a suggested company."
+        );
       }
       setSearchResults([]);
     } finally {

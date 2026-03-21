@@ -10,6 +10,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .alphavantage_key import get_alphavantage_key
 from .models import BriefingLog
 from .serializers import BriefingRequestSerializer
 
@@ -440,7 +441,7 @@ class BriefingView(APIView):
       "mode": "live",
       "providers": {
         "newsapi": True,
-        "alphavantage": bool((os.environ.get("ALPHAVANTAGE_API_KEY") or "").strip()),
+        "alphavantage": bool(get_alphavantage_key()),
       },
       "news_queries": {
         "combined_market": combined_query,
@@ -678,7 +679,7 @@ class BriefingView(APIView):
       "mode": "mock",
       "providers": {
         "newsapi": False,
-        "alphavantage": bool((os.environ.get("ALPHAVANTAGE_API_KEY") or "").strip()),
+        "alphavantage": bool(get_alphavantage_key()),
       },
     }
     if mock_reason:
@@ -701,10 +702,20 @@ class CompanySearchView(APIView):
     if not query:
       return Response({"results": []})
 
-    api_key = os.environ.get("ALPHAVANTAGE_API_KEY")
+    api_key = get_alphavantage_key()
     if not api_key:
+      logger.error(
+        "Company search requested but no Alpha Vantage key found "
+        "(set ALPHAVANTAGE_API_KEY or ALPHA_VANTAGE_API_KEY on the server)"
+      )
       return Response(
-        {"detail": "Company search is temporarily unavailable.", "results": []},
+        {
+          "detail": (
+            "Company search isn’t available on this server right now. "
+            "You can still add a name using “Add as typed”."
+          ),
+          "results": [],
+        },
         status=status.HTTP_503_SERVICE_UNAVAILABLE,
       )
 
@@ -715,17 +726,84 @@ class CompanySearchView(APIView):
           "function": "SYMBOL_SEARCH",
           "keywords": query,
           "apikey": api_key,
+          "datatype": "json",
         },
-        timeout=10,
+        headers={"User-Agent": "FinNews/1.0"},
+        timeout=15,
       )
+      if resp.status_code == 429:
+        logger.warning("Company search HTTP 429 for %r", query)
+        return Response(
+          {
+            "detail": (
+              "Search is busy right now. Please wait a minute and try again, "
+              "or add the company using “Add as typed”."
+            ),
+            "results": [],
+          },
+          status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
       resp.raise_for_status()
       data = resp.json()
-      matches = data.get("bestMatches") or []
+      if not isinstance(data, dict):
+        logger.warning("Company search JSON root not object for %r: %s", query, type(data).__name__)
+        return Response(
+          {
+            "detail": "We couldn’t search for companies just now. Please try again in a moment.",
+            "results": [],
+          },
+          status=status.HTTP_502_BAD_GATEWAY,
+        )
+    except ValueError as exc:
+      logger.warning("Company search invalid JSON for %r: %s", query, exc)
+      return Response(
+        {
+          "detail": "We couldn’t search for companies just now. Please try again in a moment.",
+          "results": [],
+        },
+        status=status.HTTP_502_BAD_GATEWAY,
+      )
     except Exception as exc:  # noqa: BLE001
       logger.warning("Company search failed for %s: %s", query, exc)
       return Response(
-        {"detail": "Unable to search companies right now.", "results": []},
+        {
+          "detail": "We couldn’t search for companies just now. Please try again in a moment.",
+          "results": [],
+        },
         status=status.HTTP_502_BAD_GATEWAY,
+      )
+
+    # Upstream often returns HTTP 200 with Note (rate limit) or Error Message instead of bestMatches.
+    note = (data.get("Note") or "").strip()
+    if note:
+      logger.warning("Company search upstream rate/info for %r: %s", query, note[:300])
+      return Response(
+        {
+          "detail": (
+            "Search is busy right now. Please wait a minute and try again, "
+            "or add the company using “Add as typed”."
+          ),
+          "results": [],
+        },
+        status=status.HTTP_503_SERVICE_UNAVAILABLE,
+      )
+    err_msg = (data.get("Error Message") or data.get("Information") or "").strip()
+    if err_msg:
+      logger.warning("Company search upstream error for %r: %s", query, err_msg[:300])
+      return Response(
+        {
+          "detail": "We couldn’t look up that company. Try again later, or add the name manually.",
+          "results": [],
+        },
+        status=status.HTTP_502_BAD_GATEWAY,
+      )
+
+    matches = data.get("bestMatches") or []
+    if "bestMatches" not in data:
+      logger.warning(
+        "Company search response missing bestMatches for %r; keys=%s",
+        query,
+        list(data.keys()),
       )
 
     results: list[dict[str, Any]] = []

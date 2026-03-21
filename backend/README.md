@@ -93,11 +93,22 @@ The React client uses:
 
   **Note:** NewsAPI’s **free** developer key is meant for **local development** only (requests must originate from your machine). If Django runs on **Render/Heroku/etc.**, NewsAPI often returns an error unless you use a **paid** plan that allows server-side calls.
 
-- **Alpha Vantage** – used in `CompanySearchView` to power the company search suggestions. Set:
+- **Alpha Vantage** – powers watchlist / onboarding **company search** (`SYMBOL_SEARCH`). Set **`ALPHAVANTAGE_API_KEY`** in the environment (Render dashboard). The app also accepts **`ALPHA_VANTAGE_API_KEY`** or **`ALPHAVANTAGE_KEY`** if you named it differently.
+
+  **If search always returns nothing or errors:**
+
+  1. **Free tier limits** – Alpha Vantage’s free API is **very** limited (on the order of **25 requests per day** for the whole key, shared across all users and endpoints). Heavy testing can exhaust the quota; responses often include a `Note` about call frequency. Upgrade or wait for the daily reset.
+  2. **Wrong env name on Render** – Must be linked to the **web service** that runs Gunicorn, not only a one-off job. Redeploy after changing env.
+  3. **Stray quotes** – Value should be `YKEY123` not `"YKEY123"` in the dashboard (the server strips one pair of quotes if present).
+  4. **Diagnose from the server** (same env as production):
 
   ```bash
-  export ALPHAVANTAGE_API_KEY="your_alpha_vantage_key"
+  cd backend
+  python manage.py check_alphavantage_env
+  python manage.py check_alphavantage_env --ping
   ```
+
+  `--ping` runs a real `SYMBOL_SEARCH` for `IBM` and prints HTTP status, JSON keys, `Note` / `Error Message`, and match count.
 
 ## CORS (hosted frontend)
 

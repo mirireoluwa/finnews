@@ -11,8 +11,7 @@ if (apiRoot) {
   axios.defaults.baseURL = apiRoot
 } else if (import.meta.env.PROD) {
   console.error(
-    '[FinNews] VITE_API_URL is missing. Login/API calls will fail. Add it in your frontend host (e.g. Vercel → Environment Variables) ' +
-      'to your Render API URL, then redeploy. Example: https://finnews-api.onrender.com'
+    "[FinNews] Public API URL (VITE_API_URL) is not set. Set it in your frontend project’s environment and redeploy, or API calls from this build will fail."
   )
 }
 
