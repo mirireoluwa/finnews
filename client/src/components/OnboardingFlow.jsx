@@ -24,9 +24,9 @@ const FOCUS_OPTIONS = [
 ];
 
 const btnPrimary = {
-  background: "var(--accent)",
-  color: "var(--on-accent)",
-  border: "none",
+  background: "var(--btn-primary-bg)",
+  color: "var(--btn-primary-fg)",
+  border: "1px solid var(--btn-primary-border)",
   borderRadius: 12,
   padding: "12px 22px",
   fontWeight: 800,
@@ -246,7 +246,7 @@ export default function OnboardingFlow({
               flex: 1,
               maxWidth: 120,
               borderRadius: 2,
-              background: n <= step ? "var(--accent)" : "var(--border-subtle)",
+              background: n <= step ? "var(--btn-primary-bg)" : "var(--border-subtle)",
               opacity: n <= step ? 1 : 0.45,
               transition: "background 0.2s ease",
             }}
@@ -341,7 +341,7 @@ export default function OnboardingFlow({
               >
                 {searching ? (
                   <>
-                    <FinNewsLogoSpinnerInline size={18} variant="onLight" />
+                    <FinNewsLogoSpinnerInline size={18} variant="onDark" />
                     Searching…
                   </>
                 ) : (
@@ -670,7 +670,7 @@ export default function OnboardingFlow({
               >
                 {finishing ? (
                   <>
-                    <FinNewsLogoSpinnerInline size={18} variant="onLight" />
+                    <FinNewsLogoSpinnerInline size={18} variant="onDark" />
                     Saving…
                   </>
                 ) : (

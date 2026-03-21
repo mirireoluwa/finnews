@@ -68,9 +68,9 @@ export default function AuthPage({ onAuthenticated }) {
     width: "100%",
     padding: "14px 20px",
     borderRadius: 12,
-    border: "none",
-    background: "var(--accent)",
-    color: "var(--on-accent)",
+    border: "1px solid var(--btn-primary-border)",
+    background: "var(--btn-primary-bg)",
+    color: "var(--btn-primary-fg)",
     fontSize: 15,
     fontWeight: 800,
     cursor: disabled ? "wait" : "pointer",
@@ -218,11 +218,9 @@ export default function AuthPage({ onAuthenticated }) {
     }
   }
 
-  const titleGradient = {
-    background: "linear-gradient(90deg, var(--accent) 0%, #7dd3fc 100%)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-    backgroundClip: "text",
+  const titleSignupStyle = {
+    color: "var(--text-primary)",
+    textShadow: "0 1px 12px rgba(0, 0, 0, 0.45)",
   };
 
   const heroSub = {
@@ -391,7 +389,7 @@ export default function AuthPage({ onAuthenticated }) {
                   <button type="submit" disabled={submitting} style={submitBtnStyle(submitting)}>
                     {submitting ? (
                       <>
-                        <FinNewsLogoSpinnerInline size={22} variant="onLight" />
+                        <FinNewsLogoSpinnerInline size={22} variant="onDark" />
                         Signing in…
                       </>
                     ) : (
@@ -462,7 +460,7 @@ export default function AuthPage({ onAuthenticated }) {
                   <button type="submit" disabled={submitting} style={submitBtnStyle(submitting)}>
                     {submitting ? (
                       <>
-                        <FinNewsLogoSpinnerInline size={22} variant="onLight" />
+                        <FinNewsLogoSpinnerInline size={22} variant="onDark" />
                         Sending…
                       </>
                     ) : (
@@ -561,7 +559,7 @@ export default function AuthPage({ onAuthenticated }) {
                   <button type="submit" disabled={submitting} style={submitBtnStyle(submitting)}>
                     {submitting ? (
                       <>
-                        <FinNewsLogoSpinnerInline size={22} variant="onLight" />
+                        <FinNewsLogoSpinnerInline size={22} variant="onDark" />
                         Updating…
                       </>
                     ) : (
@@ -745,7 +743,7 @@ export default function AuthPage({ onAuthenticated }) {
                   <button type="submit" disabled={submitting} style={submitBtnStyle(submitting)}>
                     {submitting ? (
                       <>
-                        <FinNewsLogoSpinnerInline size={22} variant="onLight" />
+                        <FinNewsLogoSpinnerInline size={22} variant="onDark" />
                         Creating account…
                       </>
                     ) : (
@@ -832,7 +830,7 @@ export default function AuthPage({ onAuthenticated }) {
                 </>
               ) : (
                 <>
-                  <h1 className="auth-hero-title auth-hero-title-signup" style={titleGradient}>
+                  <h1 className="auth-hero-title auth-hero-title-signup" style={titleSignupStyle}>
                     Create your FinNews account
                   </h1>
                   <p className="auth-hero-sub" style={heroSub}>

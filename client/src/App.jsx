@@ -617,7 +617,7 @@ export default function App() {
               background: "var(--bg-glass)",
               backdropFilter: "blur(14px)",
               WebkitBackdropFilter: "blur(14px)",
-              boxShadow: isLight ? "0 8px 32px rgba(15, 23, 42, 0.06)" : "0 8px 32px rgba(0, 0, 0, 0.25)",
+              boxShadow: "var(--header-bar-shadow)",
               boxSizing: "border-box",
             }}
           >
@@ -798,7 +798,7 @@ export default function App() {
                 background: "var(--bg-glass)",
                 backdropFilter: "blur(14px)",
                 WebkitBackdropFilter: "blur(14px)",
-                boxShadow: isLight ? "0 12px 40px rgba(15, 23, 42, 0.12)" : "0 16px 48px rgba(0, 0, 0, 0.45)",
+                boxShadow: "var(--header-drawer-shadow)",
                 display: "flex",
                 flexDirection: "column",
                 gap: 12,
@@ -1095,9 +1095,9 @@ export default function App() {
                 onClick={fetchDaily}
                 disabled={loading}
                 style={{
-                  background: "var(--accent)",
-                  color: "var(--on-accent)",
-                  border: "none",
+                  background: "var(--btn-primary-bg)",
+                  color: "var(--btn-primary-fg)",
+                  border: "1px solid var(--btn-primary-border)",
                   padding: "13px 24px",
                   borderRadius: 10,
                   fontSize: 14,
@@ -1113,7 +1113,7 @@ export default function App() {
               >
                 {loading ? (
                   <>
-                    <FinNewsLogoSpinnerInline size={20} variant="onLight" />
+                    <FinNewsLogoSpinnerInline size={20} variant="onDark" />
                     Loading…
                   </>
                 ) : (

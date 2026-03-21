@@ -11,15 +11,15 @@ const inputBase = {
 };
 
 const btnPrimary = {
-  border: "none",
+  border: "1px solid var(--btn-primary-border)",
   borderRadius: 10,
   padding: "11px 18px",
   fontSize: 14,
   fontWeight: 700,
   fontFamily: "inherit",
   cursor: "pointer",
-  background: "var(--accent)",
-  color: "var(--on-accent)",
+  background: "var(--btn-primary-bg)",
+  color: "var(--btn-primary-fg)",
   whiteSpace: "nowrap",
 };
 
@@ -169,7 +169,7 @@ export default function WatchlistManagePanel({
           >
             {searching ? (
               <>
-                <FinNewsLogoSpinnerInline size={18} variant="onLight" />
+                <FinNewsLogoSpinnerInline size={18} variant="onDark" />
                 Searching…
               </>
             ) : (

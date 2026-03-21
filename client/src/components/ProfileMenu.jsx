@@ -311,9 +311,9 @@ export default function ProfileMenu({
                   width: "100%",
                   padding: "10px 14px",
                   borderRadius: 10,
-                  border: "none",
-                  background: "var(--accent)",
-                  color: "var(--on-accent)",
+                  border: "1px solid var(--btn-primary-border)",
+                  background: "var(--btn-primary-bg)",
+                  color: "var(--btn-primary-fg)",
                   fontWeight: 800,
                   cursor: savingProfile || avatarBusy ? "wait" : "pointer",
                   fontFamily: "inherit",
@@ -326,7 +326,7 @@ export default function ProfileMenu({
               >
                 {savingProfile ? (
                   <>
-                    <FinNewsLogoSpinnerInline size={18} variant="onLight" />
+                    <FinNewsLogoSpinnerInline size={18} variant="onDark" />
                     Saving…
                   </>
                 ) : (

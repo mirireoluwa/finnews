@@ -18,8 +18,12 @@
   --text-primary: #e8f4fc;
   --text-muted: #8eb4d4;
   --badge-bg: rgba(56, 189, 248, 0.16);
-  /* Text on filled accent buttons */
+  /* Text on filled accent buttons (charts, rare high-emphasis only) */
   --on-accent: #041c2f;
+  /* Primary CTAs: soft fill + main text (avoid saturated accent + white) */
+  --btn-primary-bg: rgba(56, 189, 248, 0.18);
+  --btn-primary-fg: var(--text-primary);
+  --btn-primary-border: var(--border-subtle);
   /* Sentiment / positive direction (sky, not green) */
   --positive: #38bdf8;
   --positive-soft: rgba(56, 189, 248, 0.12);
@@ -27,18 +31,18 @@
   --chart-line-1: #38bdf8;
   --chart-line-2: #7dd3fc;
 
-  /* Bottom nav: one sky blue for active pill in both themes */
-  --nav-active-sky: #38bdf8;
-
-  /* Bottom navigation (dark) */
+  /* Bottom navigation (dark): active tab = same accent treatment as header Auto (on) chip */
   --nav-surface: var(--bg-glass);
   --nav-border: var(--border-subtle);
-  --nav-active-bg: var(--nav-active-sky);
-  --nav-active-fg: var(--on-accent);
+  --nav-active-bg: var(--accent-soft);
+  --nav-active-fg: var(--text-muted);
   --nav-inactive-fg: var(--text-muted);
   --nav-icon-ring: var(--border-subtle);
-  --nav-icon-well-active: rgba(255, 255, 255, 0.14);
+  --nav-icon-well-active: transparent;
   --nav-icon-well-inactive: rgba(255, 255, 255, 0.22);
+
+  --header-bar-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  --header-drawer-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
 }
 
 [data-theme="light"] {
@@ -46,7 +50,8 @@
   color-scheme: light;
   --bg: #e3f0fc;
   --bg-elevated: #eef6ff;
-  --bg-glass: rgba(240, 249, 255, 0.94);
+  /* Header / drawers: same fill as cards (theme-aligned, not a separate tint) */
+  --bg-glass: var(--bg-elevated);
   --border-subtle: rgba(37, 99, 235, 0.18);
   --accent: #2563eb;
   --accent-soft: rgba(37, 99, 235, 0.1);
@@ -55,20 +60,26 @@
   --text-muted: #4a6fa5;
   --badge-bg: rgba(37, 99, 235, 0.08);
   --on-accent: #f8fafc;
+  --btn-primary-bg: rgba(37, 99, 235, 0.12);
+  --btn-primary-fg: var(--text-primary);
+  --btn-primary-border: var(--border-subtle);
   --positive: #2563eb;
   --positive-soft: rgba(37, 99, 235, 0.1);
   --chart-line-1: #2563eb;
   --chart-line-2: #0ea5e9;
 
-  /* Bottom nav: exact same active sky + icon treatment as dark mode */
-  --nav-surface: rgba(224, 242, 254, 0.97);
-  --nav-border: rgba(56, 189, 248, 0.5);
-  --nav-active-bg: var(--nav-active-sky);
-  --nav-active-fg: #041c2f;
-  --nav-inactive-fg: #075985;
-  --nav-icon-ring: rgba(56, 189, 248, 0.55);
-  --nav-icon-well-active: rgba(255, 255, 255, 0.14);
-  --nav-icon-well-inactive: rgba(56, 189, 248, 0.35);
+  /* Bottom nav: active tab = header Auto (on) chip (accent-soft + muted label) */
+  --nav-surface: var(--bg-glass);
+  --nav-border: var(--border-subtle);
+  --nav-active-bg: var(--accent-soft);
+  --nav-active-fg: var(--text-muted);
+  --nav-inactive-fg: var(--text-muted);
+  --nav-icon-ring: var(--border-subtle);
+  --nav-icon-well-active: transparent;
+  --nav-icon-well-inactive: var(--accent-soft);
+
+  --header-bar-shadow: 0 8px 28px rgba(37, 99, 235, 0.1);
+  --header-drawer-shadow: 0 12px 40px rgba(37, 99, 235, 0.12);
 }
 
 html {

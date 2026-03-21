@@ -46,8 +46,9 @@
   top: 0;
   z-index: 100000;
   padding: 10px 16px;
-  background: var(--accent, #38bdf8);
-  color: var(--on-accent, #041c2f);
+  background: var(--btn-primary-bg, rgba(56, 189, 248, 0.18));
+  color: var(--btn-primary-fg, #e8f4fc);
+  border: 1px solid var(--btn-primary-border, rgba(56, 189, 248, 0.22));
   font-weight: 800;
   font-size: 14px;
   border-radius: 0 0 8px 0;
