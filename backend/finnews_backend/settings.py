@@ -202,6 +202,8 @@ if (os.environ.get("EMAIL_HOST") or "").strip():
   EMAIL_USE_TLS = (os.environ.get("EMAIL_USE_TLS") or "true").lower() in ("1", "true", "yes")
   EMAIL_HOST_USER = (os.environ.get("EMAIL_HOST_USER") or "").strip()
   EMAIL_HOST_PASSWORD = (os.environ.get("EMAIL_HOST_PASSWORD") or "").strip()
+  # Avoid hanging the HTTP request if SMTP (e.g. Gmail) is slow or blocked from the host.
+  EMAIL_TIMEOUT = int((os.environ.get("EMAIL_TIMEOUT") or "25").strip())
 else:
   # Local / dev: reset links print in the Django console (runserver) or Render logs.
   EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

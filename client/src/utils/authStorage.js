@@ -1,4 +1,5 @@
 import axios from "axios";
+import { formatAxiosError } from "./axiosErrors.js";
 
 const TOKEN_KEY = "finnewsAuthToken";
 
@@ -33,18 +34,7 @@ export function clearSession() {
 }
 
 function apiErrorMessage(error) {
-  const d = error.response?.data;
-  if (!d) return error.message || "Request failed.";
-  if (typeof d.detail === "string") return d.detail;
-  if (Array.isArray(d.detail)) return String(d.detail[0] ?? "Request failed.");
-  if (Array.isArray(d.non_field_errors)) return d.non_field_errors[0];
-  if (typeof d.non_field_errors === "string") return d.non_field_errors;
-  const key = Object.keys(d)[0];
-  if (key) {
-    const v = d[key];
-    return Array.isArray(v) ? v[0] : String(v);
-  }
-  return "Request failed.";
+  return formatAxiosError(error, "Request failed.");
 }
 
 /**

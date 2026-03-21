@@ -20,7 +20,7 @@ NEWSAPI_URL = "https://newsapi.org/v2/everything"
 ALPHAVANTAGE_URL = "https://www.alphavantage.co/query"
 
 # Wider coverage: fetch more from NewsAPI, keep up to this many stories per region.
-# Default 24: free NewsAPI is ~100 requests/day; each briefing uses 3 calls (global + ngx + batched watchlist).
+# Default 24: free NewsAPI is ~100 requests/day; each briefing uses 2 calls (combined market + batched watchlist).
 _NEWSAPI_PAGE = int((os.environ.get("NEWSAPI_MARKET_PAGE_SIZE") or "24").strip())
 NEWSAPI_MARKET_PAGE_SIZE = max(10, min(_NEWSAPI_PAGE, 100))
 _MAX_STORIES = int((os.environ.get("MAX_MARKET_STORIES") or "30").strip())
@@ -169,6 +169,32 @@ class BriefingView(APIView):
       out.append(art)
     return out
 
+  def _article_dedupe_key(self, art: dict[str, Any]) -> str:
+    u = (art.get("url") or "").strip()
+    if u:
+      return u
+    return f"{art.get('title')}|{art.get('publishedAt')}"
+
+  def _is_nigeria_market_article(self, art: dict[str, Any]) -> bool:
+    """Heuristic: story is about Nigeria / NGX (used when splitting a combined NewsAPI response)."""
+    title = (art.get("title") or "").lower()
+    desc = (art.get("description") or "").lower()
+    blob = f"{title} {desc}"
+    if "nigeria" in blob or "nigerian" in blob:
+      return True
+    if "lagos" in blob and ("stock" in blob or "exchange" in blob or "market" in blob or "equit" in blob):
+      return True
+    if "nse" in blob and ("nigeria" in blob or "nigerian" in blob or "lagos" in blob or "equit" in blob):
+      return True
+    if "ngx" in blob:
+      if any(b in blob for b in ("paperless", "nginx", "pypi", "npm", "docker hub")):
+        return False
+      return any(
+        w in blob
+        for w in ("index", "share", "stock", "equit", "market", "exchange", "all share", "nigeria")
+      )
+    return False
+
   def _build_market_section(
     self, articles: list[dict[str, Any]], fallback_headline: str
   ) -> dict[str, Any]:
@@ -255,7 +281,7 @@ class BriefingView(APIView):
   ) -> list[dict[str, Any]]:
     """
     One NewsAPI request for the whole watchlist (saves quota vs one request per ticker).
-    Free tier is ~100 requests/day — previously 2 + len(watchlist) calls per briefing.
+    Free tier is ~100 requests/day — one call here plus batched watchlist per briefing.
     """
     parts: list[str] = []
     for raw in watchlist:
@@ -346,19 +372,19 @@ class BriefingView(APIView):
       'OR "NGX All Share" OR "NGX index"'
     )
 
-    # Global financial markets
-    global_articles = self._fetch_articles(
+    # One NewsAPI request for both regions (saves 1 call vs separate global + ngx — helps free-tier quota).
+    combined_query = f"({global_query}) OR ({ngx_query})"
+    combined_page = min(100, max(NEWSAPI_MARKET_PAGE_SIZE * 2, 28))
+    combined_raw = self._fetch_articles(
       api_key=api_key,
-      query=global_query,
-      page_size=NEWSAPI_MARKET_PAGE_SIZE,
+      query=combined_query,
+      page_size=combined_page,
     )
-    # Nigerian market / NGX (query + post-filter for residual junk)
-    ngx_raw = self._fetch_articles(
-      api_key=api_key,
-      query=ngx_query,
-      page_size=NEWSAPI_MARKET_PAGE_SIZE,
-    )
-    ngx_articles = self._filter_articles_for_ngx(ngx_raw)
+
+    ngx_prelim = [a for a in combined_raw if self._is_nigeria_market_article(a)]
+    ngx_articles = self._filter_articles_for_ngx(ngx_prelim)
+    ngx_keys = {self._article_dedupe_key(a) for a in ngx_articles}
+    global_articles = [a for a in combined_raw if self._article_dedupe_key(a) not in ngx_keys]
 
     global_section = self._build_market_section(
       global_articles,
@@ -416,7 +442,11 @@ class BriefingView(APIView):
         "newsapi": True,
         "alphavantage": bool((os.environ.get("ALPHAVANTAGE_API_KEY") or "").strip()),
       },
-      "news_queries": {"global": global_query, "ngx": ngx_query},
+      "news_queries": {
+        "combined_market": combined_query,
+        "global": global_query,
+        "ngx": ngx_query,
+      },
     }
 
     return payload

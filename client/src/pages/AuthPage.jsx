@@ -243,6 +243,26 @@ export default function AuthPage({ onAuthenticated }) {
           }}
         >
           <div style={{ width: "100%", maxWidth: 440, margin: "0 auto" }}>
+            {import.meta.env.PROD && !(import.meta.env.VITE_API_URL || "").trim() && (
+              <div
+                role="alert"
+                style={{
+                  marginBottom: 16,
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  border: "1px solid #f87171",
+                  background: prefersLight ? "rgba(248, 113, 113, 0.12)" : "rgba(248, 113, 113, 0.18)",
+                  color: prefersLight ? "#991b1b" : "#fecaca",
+                  fontSize: 13,
+                  lineHeight: 1.5,
+                }}
+              >
+                <strong style={{ display: "block", marginBottom: 6 }}>API not configured</strong>
+                This deployment is missing <code style={{ fontSize: 12 }}>VITE_API_URL</code>. In your
+                frontend host (e.g. Vercel), set it to your Render API URL (no trailing slash), redeploy
+                Production, then refresh.
+              </div>
+            )}
             {mode === "login" ? (
               <>
                 {authBanner.type === "ok" && authBanner.text && (

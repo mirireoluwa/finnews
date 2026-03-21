@@ -8,8 +8,10 @@ from django.conf import settings as django_settings
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -100,6 +102,7 @@ class MeView(APIView):
     return Response(user_to_client_dict(user))
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class PasswordResetRequestView(APIView):
   """POST { email } — sends reset link if user exists (same response either way)."""
 
@@ -151,6 +154,7 @@ class PasswordResetRequestView(APIView):
     )
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class PasswordResetConfirmView(APIView):
   """POST { uid, token, new_password } — set new password from email link."""
 

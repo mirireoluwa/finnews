@@ -14,6 +14,7 @@ import {
   getToken,
   logoutAccount,
 } from "./utils/authStorage.js";
+import { formatAxiosError } from "./utils/axiosErrors.js";
 import finnewsLogo from "./assets/finnews-logo.svg";
 import "./App.css";
 
@@ -35,8 +36,9 @@ function mockDataHelpText(meta) {
   const byReason = {
     missing_newsapi_key:
       "Create backend/.env next to manage.py with one line (no quotes): NEWSAPI_API_KEY=your_key. Register at newsapi.org/register. Restart runserver (Ctrl+C, then python manage.py runserver). Verify: python manage.py check_newsapi_env. Then use Live now.",
-    newsapi_http_error:
-      "NewsAPI rejected the request (wrong key, quota, or HTTP error). Run: python manage.py check_newsapi_env --ping (from backend/) to see the exact code. Check the Django terminal log.",
+    newsapi_http_error: detail
+      ? `NewsAPI: ${detail}. Check Render logs or run: python manage.py check_newsapi_env --ping (local).`
+      : "NewsAPI could not return live headlines from your server (wrong key, quota, or free developer keys blocked outside localhost). On Render, you usually need a NewsAPI plan that allows production / server requests. Set NEWSAPI_API_KEY on Render and check logs.",
     newsapi_api_error: detail
       ? `NewsAPI: ${detail}`
       : "NewsAPI returned an error in the response body. Check the Django log.",
@@ -245,7 +247,13 @@ export default function App() {
       if (isFirstLoad) setTab("global");
       const nowStr = new Date().toLocaleTimeString();
       setLastFetched(nowStr);
-      setLiveBanner(`Updated ${nowStr}`);
+      if (next?.meta?.mode === "mock") {
+        setLiveBanner(
+          `Updated ${nowStr} — demo headlines only (NewsAPI not available from this server or quota exceeded).`
+        );
+      } else {
+        setLiveBanner(`Updated ${nowStr}`);
+      }
     } catch (e) {
       console.error(e);
       const status = e.response?.status;
@@ -259,7 +267,7 @@ export default function App() {
       } else if (detail) {
         setError(detail);
       } else {
-        setError(e.message || "Failed to fetch news.");
+        setError(formatAxiosError(e, "Failed to fetch live news."));
       }
     } finally {
       setLoading(false);
@@ -305,7 +313,7 @@ export default function App() {
       } else if (detail) {
         setError(detail);
       } else {
-        setError(e.message || "Failed to fetch daily briefing.");
+        setError(formatAxiosError(e, "Failed to fetch daily briefing."));
       }
     } finally {
       setLoading(false);
@@ -341,7 +349,7 @@ export default function App() {
       } else if (detail) {
         setSearchError(detail);
       } else {
-        setSearchError(e.message || "Failed to search for companies.");
+        setSearchError(formatAxiosError(e, "Failed to search for companies."));
       }
       setSearchResults([]);
     } finally {
@@ -1225,9 +1233,9 @@ export default function App() {
                     lineHeight: 1.5,
                   }}
                 >
-                  Daily dashboard reuses today’s saved snapshot; after fixing the key, use{" "}
-                  <strong>Live now</strong> or delete <code style={{ fontSize: 11 }}>db.sqlite3</code>{" "}
-                  to drop cached mock snapshots.
+                  Daily mode may reuse today&apos;s snapshot stored on the server. After fixing NewsAPI on
+                  Render, use <strong>Live now</strong> to pull fresh headlines (locally you can also clear
+                  <code style={{ fontSize: 11 }}> db.sqlite3</code> if you use SQLite).
                 </p>
               </div>
             )}

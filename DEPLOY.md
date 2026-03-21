@@ -60,6 +60,23 @@ Render sets `RENDER=true` automatically; `ALLOWED_HOSTS` includes `.onrender.com
   - add each preview origin to `CORS_ALLOWED_ORIGINS`, **or**
   - on Render set **`CORS_ALLOW_VERCEL_PREVIEWS=true`** (allows any `https://*.vercel.app`). Use only if you’re OK with that scope.
 
+## Troubleshooting: “Network Error” on login or **forgot password** (live site)
+
+Forgot password uses the **same API** as login (`POST /api/auth/password-reset/`). If you see a network error, the browser usually never gets a response from the API.
+
+1. **`VITE_API_URL` on the frontend host** (e.g. Vercel) must be your Render API, e.g. `https://finnews-api.onrender.com` — **no trailing slash**. Redeploy after changing it (Vite bakes this in at build time).
+2. **Render → `CORS_ALLOWED_ORIGINS`** must include the **exact** origin users see in the address bar: `https://fin-news.xyz` **or** `https://www.fin-news.xyz` (add both if you use both).
+3. **Render free tier:** first request after idle can take ~30–60s (cold start); retry.
+4. **Password reset still returns 200** even if email fails; a network error means the **HTTP request** never completed—fix URL/CORS first. After that, set **`FRONTEND_URL`** and Gmail/SMTP on Render so mail actually sends.
+
+## Live headlines (NewsAPI) on Render
+
+“Live updates” call **`POST /api/briefing/`**, which uses **NewsAPI** from your Render server.
+
+- **Free NewsAPI developer keys** are often **not allowed** for requests that originate from cloud hosts (only localhost / dev). You may always see **demo (mock)** headlines until you use a **NewsAPI plan that allows production** server-side use (check [newsapi.org](https://newsapi.org) terms and pricing).
+- **429 / quota:** the free tier is ~**100 requests/day**; each live refresh uses several requests. Heavy use hits the limit quickly.
+- Set **`NEWSAPI_API_KEY`** on Render. Check logs: `Falling back to mock payload` means NewsAPI failed.
+
 ## 5. Verify
 
 - Open `https://<your-render-service>/` → JSON with `"service": "finnews-api"` and `"health": "/health/"`.
