@@ -3,5 +3,20 @@
   "installCommand": "cd client && npm ci",
   "buildCommand": "cd client && npm run build",
   "outputDirectory": "client/dist",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "headers": [
+    {
+      "source": "/og-image.png",
+      "headers": [
+        { "key": "Content-Type", "value": "image/png" },
+        { "key": "Cache-Control", "value": "public, max-age=86400, s-maxage=86400" }
+      ]
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*\\.(?:js|mjs|css|png|jpe?g|gif|svg|json|ico|webp|woff2?|txt|map))$",
+      "dest": "/$1"
+    },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
 }

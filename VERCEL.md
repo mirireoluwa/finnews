@@ -14,10 +14,18 @@ Vercel hosts the **React (Vite) app** in `client/`. The **Django API** must run 
    | Name | Value |
    |------|--------|
    | `VITE_API_URL` | Your Django base URL, **no** trailing slash, e.g. `https://finnews-api.onrender.com` |
+   | `VITE_SITE_URL` (recommended) | Your **public site URL** with `https://`, **no** trailing slash, e.g. `https://fin-news.xyz` — used so `og:image` and Twitter cards use an **absolute** URL (Slack, LinkedIn, iMessage often ignore relative image URLs). |
 
    Without `VITE_API_URL`, the built app calls `/api/...` on the Vercel domain and those routes will **not** reach Django.
 
 5. Click **Deploy**.
+
+### Link preview (Open Graph) image not showing?
+
+1. Set **`VITE_SITE_URL`** to the **same origin** people use when sharing the link (your custom domain if you use one), then **redeploy** the frontend (Vite bakes this in at build time).
+2. After deploy, confirm the image is real PNG, not HTML:  
+   `curl -sI "https://YOUR_DOMAIN/og-image.png"` → should show `content-type: image/png`.
+3. Refresh cached metadata: [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/) (also helps other networks that cache OG tags).
 
 ## Option B — Root directory = `client`
 
